@@ -13,7 +13,13 @@ were required: one for current year, with the data stored in subfolders in the p
 years, which have their own year folder and subfolders. For SMAP and MODIS the functions are a more standardized and
 could potentially be turned into a single reusable function in the future. Also, another library could be used in
 order to streamline the process (http://ftputil.sschwarzer.net/trac). Eventually, some of the simpler cases like MODIS
-could be done just by using WGET
+could be done just by using WGET.
+
+Args:
+	username (str): Email address (must be registered in GPM server to work for that product)
+	password (str): Same email address
+	
+
 """
 
 # Get username and password for the ftp servers
