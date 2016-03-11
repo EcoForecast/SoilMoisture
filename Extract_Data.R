@@ -1,11 +1,25 @@
 ##Function for retrieving data and outputting as a CSV. 
 
-library(raster, quietly=TRUE,warn.conflicts=FALSE) 
-library(gdalUtils, quietly=TRUE,warn.conflicts=FALSE)
-library(rgdal, quietly=TRUE,warn.conflicts=FALSE)
-library(optparse, quietly=TRUE,warn.conflicts=FALSE)
-library(rasterVis, quietly=TRUE,warn.conflicts=FALSE)
-library(sp, quietly=TRUE,warn.conflicts=FALSE)
+repos = "http://cran.us.r-project.org"
+get.pkg <- function(pkg){
+  loaded <- do.call("require",list(package=pkg))
+  if(!loaded){
+    print(paste("trying to install",pkg))
+    install.packages(pkg,dependencies=TRUE,repos=repos)
+    loaded <- do.call("require",list(package=pkg))
+    if(loaded){
+      print(paste(pkg,"installed and loaded"))
+    } 
+    else {
+      stop(paste("could not install",pkg))
+    }    
+  }
+}
+get.pkg("raster")
+get.pkg("gdalUtils")
+get.pkg("rgdal")
+get.pkg("sp")
+get.pkg("optparse")
 
 suppressPackageStartupMessages(library("optparse"))
 option_list = list(
@@ -22,7 +36,7 @@ if (length(opt$input)==0) {
 input <- opt$input
 
 
-get_ndvi <- function(roi, image){
+get_ndvi <- function(roi, image, day){
   ###Function to get today's NDVI at point of interest. 
   
   #Inputs:
@@ -32,9 +46,8 @@ get_ndvi <- function(roi, image){
   #Outputs:
     #NDVI: NDVI value at roi. Format: integer
     #Today: Today's date. Format: Date. 
+
   
-  #Get today's date for the temp files. 
-  today <- Sys.Date()
   #Get subdatasets from the HDF file. 
   subdatasets <- get_subdatasets(image)
   red <- grep('b01',subdatasets)
@@ -48,8 +61,8 @@ get_ndvi <- function(roi, image){
   msg <- geterrmessage()
   if (grepl("Cannot create a RasterLayer", msg)) {
     print('Using alternative method to read in data')
-    outred <- paste(today,'_red.tif',sep='')
-    outnir <- paste(today,'_nir.tif',sep='')
+    outred <- paste('data/MODIS/',day,'_red.tif',sep='')
+    outnir <- paste('data/MODIS/',day,'_nir.tif',sep='')
     gdal_translate(redband, outred, of = 'GTiff')
     gdal_translate(nirband, outnir, of = 'GTiff')
     redraster <- raster(outred)
@@ -68,7 +81,7 @@ get_ndvi <- function(roi, image){
   return(ndvi_value)
 }
 
-get_soil_moisture <- function(roi,image) {
+get_soil_moisture <- function(roi,image, day) {
   
   ###Function to get today's soil moisture value at point of interest. 
   
@@ -80,10 +93,9 @@ get_soil_moisture <- function(roi,image) {
     #soil_m: Soil moisture value at roi. Format: integer
     #Today: Today's date. Format: Date. 
   
-  today <- Sys.Date()
-  
+
   #Get subdatasets from the HDF file. 
-  subdatasets <- get_subdatasets('SMAP_L3_SM_P_20151126_R12170_001.h5')
+  subdatasets <- get_subdatasets(image)
   soilmoisture <- grep('soil_moisture',subdatasets)
   smband <- subdatasets[soilmoisture[1]]
 
@@ -95,9 +107,7 @@ get_soil_moisture <- function(roi,image) {
   msg <- geterrmessage()
   if (grepl("Cannot create a RasterLayer", msg)) {
     print('Using alternative method to read in data')
-    outsm <- paste(today,'_sm.tif',sep='')
-    latsm <- paste(today,'_lat.tif',sep='')
-    longsm <- paste(today,'_long.tif',sep='')
+    outsm <- paste('data/MODIS/',day,'_sm.tif',sep='')
     gdal_translate(smband, outsm, of = 'GTiff')
     soilmoistureraster <- raster(outsm)
   }  
@@ -126,7 +136,7 @@ get_soil_moisture <- function(roi,image) {
   return(soil_m)
 }
 
-get_GPM<- function(roi,image) {
+get_GPM<- function(roi,image, day) {
   
   ###Function to get today's rainfall value at point of interest. 
   
@@ -137,8 +147,6 @@ get_GPM<- function(roi,image) {
   #Outputs:
   #rainfall: Rainfall value at roi. Format: integer
   #Today: Today's date. Format: Date. 
-  
-  today <- Sys.Date()
 
   #Open the image
   rainfallraster <- try(raster(image))
@@ -158,7 +166,7 @@ get_GPM<- function(roi,image) {
   #Retrieve coordinates of point and extract data at point. 
   rain  <- extract(rain_ext,roi)
 
-  return(soil_m)
+  return(rain)
 }
 
 write_csv <- function(today, value, data) {
@@ -167,8 +175,10 @@ write_csv <- function(today, value, data) {
   Date<-as.character(today)
   Data<-as.character(value)
   out_df <- data.frame(Date,Data)
+  print(r_csv)
+  print(out_df)
   out_csv <- rbind(r_csv,out_df)
-  write.csv(out_csv,csv)
+  write.csv(out_csv,csv,row.names=FALSE)
 }
 
 #Start actual code
@@ -181,22 +191,27 @@ lat=29.93
 coords <- as.data.frame(cbind(long, lat))
 roi <- SpatialPoints(coords)
 
-#Today's date
-today <- Sys.Date()
 
 
 
-in_name <- substr(input,0,3)
+
+in_name <- substr(input,6,8)
 
 if (in_name == "MOD") {
-    value <- get_ndvi(roi, input)
-    write_csv(today, value, 'MODIS')
+    date_unformatted <- as.integer(substr(input,21,27))
+    Date <- strptime(date_unformatted, "%Y%j")
+    value <- get_ndvi(roi, input, date_unformatted)
+    write_csv(Date, value, 'MODIS')
   } else if (in_name =="GPM") {
-    data <- get_GPM(roi, input)
-    write_csv(today, value, 'GPM')
+    date_unformatted <- as.integer(substr(input,33,40))
+    Date <- strptime(date_unformatted, "%Y%m%d")
+    value <- get_GPM(roi, input, date_unformatted)
+    write_csv(Date, value, 'GPM')
   } else if (in_name == "SMA") {
-    data <- get_soil_moisture(roi, input)
-    write_csv(today, value, 'SMAP')
+    date_unformatted <- as.integer(substr(input,24,31))
+    Date <- strptime(date_unformatted, "%Y%m%d")
+    value <- get_soil_moisture(roi, input, date_unformatted)
+    write_csv(Date, value, 'SMAP')
 } else {
   print('ERROR: Unrecognized file format')
 }
