@@ -26,16 +26,18 @@ Args:
 usern = sys.argv[1]
 passw = sys.argv[2]
 
+
 def ftp_connect(host, username, password, directory):
     """Connects to the specified FTP and cd's to the specified parent directory, where all subfolders and files
-        of interest are stored"""
+    of interest are stored"""
     ftp = FTP(host)
     ftp.login(username, password)
     ftp.cwd(directory)
 
     return ftp
 
-def download_files(ftp_con, sub=""):
+
+def download_files(ftp_con, sub):
     """Finds the files in the current folder that meet the required criteria, e.g.
         last calculated daily product. The substring (sub variable) makes reference
          to the string we want to look for in the filenames, e.g. product type or
@@ -71,7 +73,7 @@ ftp = ftp_connect("jsimpson.pps.eosdis.nasa.gov", usern, passw, "NRTPUB/imerg/gi
 for i in range(month):
     m = str(i + 1).zfill(2)
     ftp.cwd(m)
-    download_files(ftp)
+    download_files(ftp, "1410.V03E.1day")
     ftp.cwd('..')  # We ned to go back to previous level
 
 # For older years
@@ -110,7 +112,7 @@ for fd in range(len(list_folders)):
 # Iterate over folder names, download all the files
 for f in folder_names:
     ftp.cwd(str(f))
-    download_files(ftp)
+    download_files(ftp, "")
     ftp.cwd('..')
 
 ftp.quit()
