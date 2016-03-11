@@ -165,10 +165,9 @@ write_csv <- function(today, value, data) {
   csv=paste(data,'.csv',sep='')
   r_csv <- read.csv(csv,sep=',',stringsAsFactors=FALSE,header=TRUE)
   Date<-as.character(today)
-  value=3
-  SoilMoisture<-as.character(value)
-  out_df <- data.frame(Date,SoilMoisture)
-  out_csv <- rbind(r_csv,test)
+  Data<-as.character(value)
+  out_df <- data.frame(Date,Data)
+  out_csv <- rbind(r_csv,out_df)
   write.csv(out_csv,csv)
 }
 
