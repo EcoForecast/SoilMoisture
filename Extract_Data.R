@@ -9,35 +9,18 @@ library(sp, quietly=TRUE,warn.conflicts=FALSE)
 
 suppressPackageStartupMessages(library("optparse"))
 option_list = list(
-  make_option(c("-m", "--modis"), action="store", default=NA, type='character', 
-              help="Path to MODIS file"),
-  make_option(c("-g", "--GPM"), action="store", default=NA, type='character',
-              help="Path to GPM file"),
-  make_option(c("-s", "--SMAP"), action="store", default=NA, type='character',
-              help="Path to SMAP file")
+  make_option(c("-i", "--input"), action="store", default=NA, type='character', 
+              help="Path to input file")
 )
 opt = parse_args(OptionParser(option_list=option_list))
-inputs=list()
-num=1
 
-if (!is.na(opt$modis)) {
-  inputs[num] <- opt$modis
-  num <- num + 1
-}
 
-if (!is.na(opt$GPM)) {
-  inputs[num] <- opt$GPM
-  num <- num + 1
-}
-
-if (!is.na(opt$SMAP)) {
-  inputs[num] <- opt$SMAP
-  num <- num + 1
-}
-
-if (length(inputs)==0) {
+if (length(opt$input)==0) {
   stop("No files to process", call.=FALSE)
 } 
+
+input <- opt$input
+
 
 get_ndvi <- function(roi, image){
   ###Function to get today's NDVI at point of interest. 
@@ -202,21 +185,21 @@ roi <- SpatialPoints(coords)
 #Today's date
 today <- Sys.Date()
 
-#Retrieve data for 3 datasets
-inputs=list('SMAP')
-for (i in inputs){
-  in_name <- substr(i,0,3)
-  if (in_name == "MOD") {
-    value <- get_ndvi(roi, image)
-    write_csv(today, value, 'MODIS')
-  }
-  else if (in_name =="GPM") {
-    data <- get_GPM(roi, image)
-    write_csv(today, value, 'GPM')
-  }
-  else if (in_name == "SMA") {
-    data <- get_soil_moisture(roi, image)
-    write_csv(today, value, 'SMA')
-  }
 
+
+in_name <- substr(input,0,3)
+
+if (in_name == "MOD") {
+    value <- get_ndvi(roi, input)
+    write_csv(today, value, 'MODIS')
+  } else if (in_name =="GPM") {
+    data <- get_GPM(roi, input)
+    write_csv(today, value, 'GPM')
+  } else if (in_name == "SMA") {
+    data <- get_soil_moisture(roi, input)
+    write_csv(today, value, 'SMA')
+} else {
+  print('ERROR: Unrecognized file format')
 }
+
+
