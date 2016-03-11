@@ -196,7 +196,7 @@ if (in_name == "MOD") {
     write_csv(today, value, 'GPM')
   } else if (in_name == "SMA") {
     data <- get_soil_moisture(roi, input)
-    write_csv(today, value, 'SMA')
+    write_csv(today, value, 'SMAP')
 } else {
   print('ERROR: Unrecognized file format')
 }
