@@ -8,9 +8,7 @@
 
 
 
-
-#Find today's images and extract MODIS data
-
+#Compare MODIS data to process log, and process any new data.
 for i in data/MODIS/M*hdf; do
 echo $i
 if grep -Fxq $i process_log.txt
@@ -23,7 +21,7 @@ else
 fi
 done
 
-#Find and extract GPM data
+#Compare GPM data to process log, and process any new data.
 for i in data/GPM/3*tif; do
 echo $i
 if grep -Fxq $i process_log.txt
@@ -35,8 +33,7 @@ else
 fi
 done
 
-#Find and extract Soil Moisture data
-#img=$(find data/SMAP/ -name '*h5')
+#Compare SMAP data to process log, and process any new data.
 
 for i in data/SMAP/SM*5; do
 echo $i
