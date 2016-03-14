@@ -15,7 +15,7 @@ timeseries.plot<-function(csv) {
   value.dataframe<-timeseries.dataframe[,2]
   timeseries<-ts(value.dataframe)
   name<-file_path_sans_ext(csv)
-  mypath<-file.path('plots/',paste(name,'.png',sep=''))
+  mypath<-file.path('web/plots/',paste(name,'.png',sep=''))
   png(filename=mypath)
   plot.ts(timeseries,ylab='Value',main=csv)
   dev.off()
