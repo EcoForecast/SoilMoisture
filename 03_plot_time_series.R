@@ -7,16 +7,22 @@
 
 
 #using defined timeseries function
+
+library(tools)
+
 timeseries.plot<-function(csv) {
   timeseries.dataframe<-read.csv(csv)    #read the csv file into a dataframe
   value.dataframe<-timeseries.dataframe[,2]
   timeseries<-ts(value.dataframe)
+  name<-file_path_sans_ext(csv)
+  mypath<-file.path('plots/',paste(name,'.png',sep=''))
+  png(filename=mypath)
   plot.ts(timeseries,ylab='Value',main=csv)
-  
+  dev.off()
 }
 
-#run function for all CSV files #update if needed for more MODIS
-timeseries.SMAP<-timeseries.plot('SMAP.csv')
-timeseries.GPM<-timeseries.plot('GPM.csv')
-timeseries.MODIS<-timeseries.plot('MODIS.csv')
+timeseries.plot('SMAP.csv')
+timeseries.plot('MODIS.csv')
+timeseries.plot('GPM.csv')
+
 
