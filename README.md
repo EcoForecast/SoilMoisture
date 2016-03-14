@@ -1,5 +1,7 @@
 # SoilMoisture
 
+[![Join the chat at https://gitter.im/EcoForecast/SoilMoisture](https://badges.gitter.im/EcoForecast/SoilMoisture.svg)](https://gitter.im/EcoForecast/SoilMoisture?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 # Constact info
 - Radost Stanimirova: rkstan@bu.edu
 - Eric Bullock: bullocke@bu.edu
