@@ -211,9 +211,10 @@ if (in_name == "MOD") {
     date_unformatted <- as.integer(substr(input,24,31))
     Date <- strptime(date_unformatted, "%Y%m%d")
     value <- get_soil_moisture(roi, input, date_unformatted)
-    write_csv(Date, value, 'SMAP')
+    if (as.integer(value) >= 0) {
+         write_csv(Date, value, 'SMAP')
+     } else {
+     print('No data for today for SMAP') }
 } else {
   print('ERROR: Unrecognized file format')
 }
-
-
