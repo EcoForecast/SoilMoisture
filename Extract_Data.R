@@ -72,7 +72,7 @@ get_ndvi <- function(roi, image, day){
   
   #Calculate NDVI
   ndvi <- (nirraster - redraster) / (redraster + nirraster)
-  ndvi <- raster(ndvi)
+
   
   #Read in ROI data and project to the MODIS Sinusoidal Projection
   projection(roi) <- CRS("+proj=lonlat +ellps=WGS84")
