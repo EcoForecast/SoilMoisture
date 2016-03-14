@@ -49,3 +49,4 @@ else
 fi
 done
 
+Rscript 03_plot_time_series.R
