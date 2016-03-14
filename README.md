@@ -1,12 +1,9 @@
-# SoilMoisture
+SoilMoisture
+=============
 
-<<<<<<< HEAD
-# Contact info
-=======
 [![Join the chat at https://gitter.im/EcoForecast/SoilMoisture](https://badges.gitter.im/EcoForecast/SoilMoisture.svg)](https://gitter.im/EcoForecast/SoilMoisture?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-# Constact info
->>>>>>> ee07dc42d8723067970ef34f5028cd5f1dffcf6b
+# Contact info
 - Radost Stanimirova: rkstan@bu.edu
 - Eric Bullock: bullocke@bu.edu
 - Paulo Arevalo: parevalo@bu.edu 
