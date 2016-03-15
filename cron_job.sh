@@ -16,7 +16,7 @@ then
     continue   
 else
     echo processing $i
-    Rscript Extract_Data.R -i $i 
+    Rscript 02_Extract_Data.R -i $i 
     echo $i >> process_log.txt 
 fi
 done
@@ -28,7 +28,7 @@ if grep -Fxq $i process_log.txt
 then
     continue   
 else
-    Rscript Extract_Data.R -i $i 
+    Rscript 02_Extract_Data.R -i $i 
     echo $i >> process_log.txt 
 fi
 done
@@ -41,7 +41,7 @@ if grep -Fxq $i process_log.txt
 then
     continue   
 else
-    Rscript Extract_Data.R -i $i 
+    Rscript 02_Extract_Data.R -i $i 
     echo $i >> process_log.txt 
 fi
 done
