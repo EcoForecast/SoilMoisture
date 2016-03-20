@@ -4,8 +4,11 @@
 #$ -N cronjob
 
 
+# Run download job
 
+python 01_download_data.py "parevalo@bu.edu" "parevalo@bu.edu"
 
+echo `date` >> process_log.txt
 
 
 #Compare MODIS data to process log, and process any new data.
