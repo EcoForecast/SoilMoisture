@@ -2,11 +2,11 @@
 
 repos = "http://cran.us.r-project.org"
 get.pkg <- function(pkg){
-  loaded <- do.call("require",list(package=pkg))
+  loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
   if(!loaded){
     print(paste("trying to install",pkg))
-    install.packages(pkg,dependencies=TRUE,repos=repos)
-    loaded <- do.call("require",list(package=pkg))
+    install.packages(pkg,dependencies=TRUE,repos=repos,lib='/home/carya/R/library')
+    loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
     if(loaded){
       print(paste(pkg,"installed and loaded"))
     } 
@@ -20,6 +20,7 @@ get.pkg("gdalUtils")
 get.pkg("rgdal")
 get.pkg("sp")
 get.pkg("optparse")
+get.pkg("R.utils")
 
 suppressPackageStartupMessages(library("optparse"))
 option_list = list(
@@ -52,21 +53,27 @@ get_ndvi <- function(roi, image, day){
   subdatasets <- get_subdatasets(image)
   red <- grep('b01',subdatasets)
   nir <- grep('b02', subdatasets)
+  cloud <- grep('state_1km_1',subdatasets)
   redband <- subdatasets[red]
   nirband <- subdatasets[nir]
+  cloudband <- subdatasets[cloud]
 
   #Try using hdf4 bindings to directly read in data. 
   redraster <- try(raster(redband))
   nirraster <- try(raster(nirband))
+  cloudraster <- try(raster(cloudband))
   msg <- geterrmessage()
   if (grepl("Cannot create a RasterLayer", msg)) {
     print('Using alternative method to read in data')
     outred <- paste('data/MODIS/',day,'_red.tif',sep='')
     outnir <- paste('data/MODIS/',day,'_nir.tif',sep='')
+    outcloud <- paste('data/MODIS/',day,'_cloud.tif',sep='')
     gdal_translate(redband, outred, of = 'GTiff')
     gdal_translate(nirband, outnir, of = 'GTiff')
+    gdal_translate(cloudband, outcloud, of = 'GTiff')
     redraster <- raster(outred)
     nirraster <- raster(outnir)
+    cloudraster <- raster(outcloud)
   }  
   msg <- {}
   
@@ -78,7 +85,10 @@ get_ndvi <- function(roi, image, day){
   projection(roi) <- CRS("+proj=lonlat +ellps=WGS84")
   roi_rep <- spTransform(roi, CRS(projection(ndvi)))
   ndvi_value <- extract(ndvi,roi_rep)
-  return(ndvi_value)
+  cloud_int <- extract(cloudraster,roi_rep)
+  cloud_bit <- intToBin(cloud_int)
+  cloud_value <- substr(cloud_bit,1,2)
+  return(ndvi_value, cloud_value)
 }
 
 get_soil_moisture <- function(roi,image, day) {
@@ -200,8 +210,12 @@ in_name <- substr(input,6,8)
 if (in_name == "MOD") {
     date_unformatted <- as.integer(substr(input,21,27))
     Date <- strptime(date_unformatted, "%Y%j")
-    value <- get_ndvi(roi, input, date_unformatted)
-    write_csv(Date, value, 'MODIS')
+    value, cloud <- get_ndvi(roi, input, date_unformatted)
+    if (cloud == "00") {
+         write_csv(Date, value, 'MODIS')
+    } else {
+      print("Too cloudy to calculate")
+    }
   } else if (in_name =="GPM") {
     date_unformatted <- as.integer(substr(input,33,40))
     Date <- strptime(date_unformatted, "%Y%m%d")
