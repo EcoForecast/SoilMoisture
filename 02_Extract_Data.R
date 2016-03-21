@@ -4,14 +4,14 @@ repos = "http://cran.us.r-project.org"
 get.pkg <- function(pkg){
   loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
   if(!loaded){
-    print(paste("trying to install",pkg))
+    print(paste("trying to install"<Plug>PeepOpenkg))
     install.packages(pkg,dependencies=TRUE,repos=repos,lib='/home/carya/R/library')
     loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
     if(loaded){
       print(paste(pkg,"installed and loaded"))
     } 
     else {
-      stop(paste("could not install",pkg))
+      stop(paste("could not install"<Plug>PeepOpenkg))
     }    
   }
 }
@@ -20,7 +20,6 @@ get.pkg("gdalUtils")
 get.pkg("rgdal")
 get.pkg("sp")
 get.pkg("optparse")
-get.pkg("R.utils")
 
 suppressPackageStartupMessages(library("optparse"))
 option_list = list(
@@ -86,9 +85,14 @@ get_ndvi <- function(roi, image, day){
   roi_rep <- spTransform(roi, CRS(projection(ndvi)))
   ndvi_value <- extract(ndvi,roi_rep)
   cloud_int <- extract(cloudraster,roi_rep)
+  get.pkg('R.utils')
   cloud_bit <- intToBin(cloud_int)
-  cloud_value <- substr(cloud_bit,1,2)
-  return(ndvi_value, cloud_value)
+  cloud_value <- substr(cloud_bit,11,11)
+  if (cloud_value == "1") {
+     ndvi_value <- -9999
+  }
+
+  return(ndvi_value)
 }
 
 get_soil_moisture <- function(roi,image, day) {
@@ -208,10 +212,12 @@ roi <- SpatialPoints(coords)
 in_name <- substr(input,6,8)
 
 if (in_name == "MOD") {
+    print(in_name)
     date_unformatted <- as.integer(substr(input,21,27))
+    print(date_unformatted)
     Date <- strptime(date_unformatted, "%Y%j")
-    value, cloud <- get_ndvi(roi, input, date_unformatted)
-    if (cloud == "00") {
+    value <- get_ndvi(roi, input, date_unformatted)
+    if (as.integer(value) > -9998) {
          write_csv(Date, value, 'MODIS')
     } else {
       print("Too cloudy to calculate")
@@ -232,3 +238,4 @@ if (in_name == "MOD") {
 } else {
   print('ERROR: Unrecognized file format')
 }
+
