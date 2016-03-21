@@ -1,0 +1,104 @@
+Fusing Times-Series Data in a State Space Model: SMAP, GMP and MODIS
+========================================================================
+
+load in libraries
+
+```{r}
+library(rjags)
+```
+
+
+```{r}
+#plots a confidence interval around an x-y plot (e.g. a timeseries)
+ciEnvelope <- function(x,ylo,yhi,...){
+  polygon(cbind(c(x, rev(x), x[1]), c(ylo, rev(yhi),
+                                      ylo[1])), border = NA,...) 
+}
+```
+
+load data and merge datasets
+```{r}
+setwd("/home/carya/SoilMoisture/")  ## set working directory 
+
+SMAP <- read.csv("SMAP.csv")    ## read in soil moisture data 
+GPM <- read.csv("GPM.csv")      ## read in precipitation data 
+MODIS <- read.csv("MODIS.csv")  ##read in MODIS data 
+    
+## merge three datasets
+combined <- Reduce(function(x,y) merge(x, y, by="Date", all=TRUE), list(SMAP, GPM, MODIS))
+
+```
+
+
+format the data into a list for input into JAGS
+
+```{r}
+data <- list(y=combined[,2],  # soil moisture 
+             z=combined[,3],  # precipitation
+             w=combined[,4],  # reflectance
+             nt=length(y),    # number of observations over time
+             x_ic=1000,
+             tau_ic=100,      # error initial conditions
+             a_sm=1,
+             r_sm=1,         
+             a_p=1, 
+             r_p=1,         
+             a_r=1, 
+             r_r=1,          
+             a_add=1,
+             r_add=1)  
+
+## seasonal fixed effect 
+
+```
+
+run the JAGS model
+
+```{r}
+model{
+
+  #### Data Model: soil moisture
+  for(t in 1:nt){
+    y[t] ~ dnorm(x[t],tau_sm)
+  }
+  
+  #### Data Model: precipitation
+  for(t in 1:nt){
+    z[t] ~ dgamma(alpha,beta)
+  }
+  
+  #### Data Model: reflectance
+  for(t in 1:nt){
+    w[t] ~ dnorm(w[t],tau_p)
+  }
+  
+  #### Process Model
+  # the extected soil moisture given the previous soil moisture and the precipitation and reflectance
+  for(t in 1:nt){
+    SoilMoist[t] <- x[t-1] + mu + sm[t] + p[t] + r[t] + year[t]
+    x[t]~dnorm(SoilMoist[t],tau_add)
+  }
+  
+  
+  ## initial condition
+  x[i,1] ~ dnorm(x_ic,tau_ic)
+  
+  ## year effects
+  for(t in 1:nt){
+    year[t] ~ dnorm(0,tau_yr)
+  }
+  
+  #### Priors
+  tau_sm ~ dgamma(a_sm,r_sm)       # obs error soil moisture
+  tau_p ~  dgamma(a_p,r_p)         # obs error precipitation
+  tau_r ~  dgamma(a_r,r_r)         # obs error reflectance
+  tau_add ~ dgamma(a_add,r_add)    # process error 
+  tau_ind ~ dgamma(1,0.1)
+  tau_yr  ~ dgamma(1,0.1)
+  mu ~ dnorm(0.5,0.5)
+  
+  }
+```
+
+
+visualize the output
