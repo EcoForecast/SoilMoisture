@@ -86,10 +86,21 @@ get_ndvi <- function(roi, image, day){
   ndvi_value <- extract(ndvi,roi_rep)
   cloud_int <- extract(cloudraster,roi_rep)
   get.pkg('R.utils')
-  cloud_bit <- intToBin(cloud_int)
-  cloud_value <- substr(cloud_bit,11,11)
-  if (cloud_value == "1") {
-     ndvi_value <- -9999
+  #cloud_bit <- intToBin(cloud_int)
+  cloud_bit <- as.numeric(intToBits(cloud_int))
+  
+  QA_ST0_1 = 2.*cloud_bit[2] + 1.*cloud_bit[1] # Cloud state
+  QA_ST2 = 1.*cloud_bit[3] # Cloud shadow
+  QA_ST6_7 = 2.*cloud_bit[8] + 1.*cloud_bit[7] # Aerosol quantity
+  QA_ST8_9 = 2.*cloud_bit[10] + 1.*cloud_bit[9] # Cirrus detected
+  QA_ST10 = 1.*cloud_bit[11] # Internal cloud flag
+  QA_ST11 = 1.*cloud_bit[12] # Internal fire flag
+  QA_ST12 = 1.*cloud_bit[13] # MOD35 snow/ice flag
+  QA_ST13 = 1.*cloud_bit[14] # Pixel is adjacent to cloud
+  QA_ST15 = 1.*cloud_bit[16] # Internal snow mask
+
+  if (!(QA_ST0_1==0 & QA_ST2==0 & QA_ST10==0 & QA_ST11==0 & QA_ST12==0 & QA_ST13==0 & QA_ST15==0 & QA_ST8_9<=1 & (QA_ST6_7==1 |QA_ST6_7==2))) {
+     ndvi_value = -9999
   }
 
   return(ndvi_value)
