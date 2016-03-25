@@ -22,6 +22,35 @@ SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moistu
 GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
 MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 
 
+
+#-------------Run JAGS, and Do some plots
+time = as.Date(SMAP$Date)
+y = SMAP$Data
+
+# plot original weekly observation data
+plot(time,y,type='l',ylab="SoilMoisture",lwd=2,main='Daily SoilMoisture')
+
+jags.out.original = predict.JAGS(time,y)
+
+par(mfrow=c(1,1))
+
+# plot the original result (weekly observation frequency)
+time.rng = c(1,length(time)) ## adjust to zoom in and out
+out <- as.matrix(jags.out.original)
+ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
+
+plot(time,ci[2,],type='n',ylim=c(0,3),ylab="SoilMOisture",xlim=time[time.rng], main='Random Walk')
+## adjust x-axis label to be monthly if zoomed
+if(diff(time.rng) < 100){ 
+  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
+}
+ciEnvelope(time,ci[1,],ci[3,],col="lightBlue")
+points(time,y,pch="+",cex=0.5)
+
+
+#########################
+#########################
+#------------------ sub-routines,set your JAGS model here
 predict.JAGS <- function(time,y) {
   library(rjags)
   RandomWalk = "
@@ -73,30 +102,5 @@ predict.JAGS <- function(time,y) {
   #summary(jags.out)
   
 }
-
-
-
-time = as.Date(SMAP$Date)
-y = SMAP$Data
-
-# plot original weekly observation data
-plot(time,y,type='l',ylab="Flu Index",lwd=2,main='original weekly observations')
-
-jags.out.original = predict.JAGS(time,y)
-
-par(mfrow=c(1,1))
-
-# plot the original result (weekly observation frequency)
-time.rng = c(1,length(time)) ## adjust to zoom in and out
-out <- as.matrix(jags.out.original)
-ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
-
-plot(time,ci[2,],type='n',ylim=c(0,3),ylab="SoilMOisture",xlim=time[time.rng], main='Model fitted by full weekly observations')
-## adjust x-axis label to be monthly if zoomed
-if(diff(time.rng) < 100){ 
-  axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
-}
-ciEnvelope(time,ci[1,],ci[3,],col="lightBlue")
-points(time,y,pch="+",cex=0.5)
 
 
