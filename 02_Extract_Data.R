@@ -4,14 +4,14 @@ repos = "http://cran.us.r-project.org"
 get.pkg <- function(pkg){
   loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
   if(!loaded){
-    print(paste("trying to install"<Plug>PeepOpenkg))
+    print(paste("trying to install", pkg))
     install.packages(pkg,dependencies=TRUE,repos=repos,lib='/home/carya/R/library')
     loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
     if(loaded){
       print(paste(pkg,"installed and loaded"))
     } 
     else {
-      stop(paste("could not install"<Plug>PeepOpenkg))
+      stop(paste("could not install", pkg))
     }    
   }
 }
