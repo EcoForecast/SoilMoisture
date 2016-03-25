@@ -15,10 +15,10 @@ get.pkg <- function(pkg){
     }    
   }
 }
+get.pkg("sp")
 get.pkg("raster")
 get.pkg("gdalUtils")
 get.pkg("rgdal")
-get.pkg("sp")
 get.pkg("optparse")
 
 suppressPackageStartupMessages(library("optparse"))
@@ -85,7 +85,7 @@ get_ndvi <- function(roi, image, day){
   roi_rep <- spTransform(roi, CRS(projection(ndvi)))
   ndvi_value <- extract(ndvi,roi_rep)
   cloud_int <- extract(cloudraster,roi_rep)
-  get.pkg('R.utils')
+#  get.pkg('R.utils')
   #cloud_bit <- intToBin(cloud_int)
   cloud_bit <- as.numeric(intToBits(cloud_int))
   
@@ -100,7 +100,7 @@ get_ndvi <- function(roi, image, day){
   QA_ST15 = 1.*cloud_bit[16] # Internal snow mask
 
   if (!(QA_ST0_1==0 & QA_ST2==0 & QA_ST10==0 & QA_ST11==0 & QA_ST12==0 & QA_ST13==0 & QA_ST15==0 & QA_ST8_9<=1 & (QA_ST6_7==1 |QA_ST6_7==2))) {
-     ndvi_value = -9999
+     ndvi_value = NA
   }
 
   return(ndvi_value)
@@ -228,10 +228,7 @@ if (in_name == "MOD") {
     print(date_unformatted)
     Date <- strptime(date_unformatted, "%Y%j")
     value <- get_ndvi(roi, input, date_unformatted)
-    if (as.integer(value) > -9998) {
-         write_csv(Date, value, 'MODIS')
-    } else {
-      print("Too cloudy to calculate")
+    write_csv(Date, value, 'MODIS')
     }
   } else if (in_name =="GPM") {
     date_unformatted <- as.integer(substr(input,33,40))
@@ -245,6 +242,8 @@ if (in_name == "MOD") {
     if (as.integer(value) >= 0) {
          write_csv(Date, value, 'SMAP')
      } else {
+         value <- NA
+	 write_csv(Date, value, 'SMAP')
      print('No data for today for SMAP') }
 } else {
   print('ERROR: Unrecognized file format')
