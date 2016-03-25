@@ -4,14 +4,14 @@ repos = "http://cran.us.r-project.org"
 get.pkg <- function(pkg){
   loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
   if(!loaded){
-    print(paste("trying to install",pkg))
+    print(paste("trying to install"<Plug>PeepOpenkg))
     install.packages(pkg,dependencies=TRUE,repos=repos,lib='/home/carya/R/library')
     loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
     if(loaded){
       print(paste(pkg,"installed and loaded"))
     } 
     else {
-      stop(paste("could not install",pkg))
+      stop(paste("could not install"<Plug>PeepOpenkg))
     }    
   }
 }
@@ -85,6 +85,7 @@ get_ndvi <- function(roi, image, day){
   roi_rep <- spTransform(roi, CRS(projection(ndvi)))
   ndvi_value <- extract(ndvi,roi_rep)
   cloud_int <- extract(cloudraster,roi_rep)
+<<<<<<< HEAD
 #  get.pkg('R.utils')
   #cloud_bit <- intToBin(cloud_int)
   cloud_bit <- as.numeric(intToBits(cloud_int))
@@ -101,6 +102,13 @@ get_ndvi <- function(roi, image, day){
 
   if (!(QA_ST0_1==0 & QA_ST2==0 & QA_ST10==0 & QA_ST11==0 & QA_ST12==0 & QA_ST13==0 & QA_ST15==0 & QA_ST8_9<=1 & (QA_ST6_7==1 |QA_ST6_7==2))) {
      ndvi_value = NA
+=======
+  get.pkg('R.utils')
+  cloud_bit <- intToBin(cloud_int)
+  cloud_value <- substr(cloud_bit,11,11)
+  if (cloud_value == "1") {
+     ndvi_value <- -9999
+>>>>>>> 63dbedfb3461cc5df4c993d6ba0602c7e640002c
   }
 
   return(ndvi_value)
@@ -229,7 +237,14 @@ if (in_name == "MOD") {
     print(date_unformatted)
     Date <- strptime(date_unformatted, "%Y%j")
     value <- get_ndvi(roi, input, date_unformatted)
+<<<<<<< HEAD
     write_csv(Date, value, 'MODIS')
+=======
+    if (as.integer(value) > -9998) {
+         write_csv(Date, value, 'MODIS')
+    } else {
+      print("Too cloudy to calculate")
+>>>>>>> 63dbedfb3461cc5df4c993d6ba0602c7e640002c
     }
   } else if (in_name =="GPM") {
     date_unformatted <- as.integer(substr(input,33,40))
@@ -249,3 +264,4 @@ if (in_name == "MOD") {
 } else {
   print('ERROR: Unrecognized file format')
 }
+
