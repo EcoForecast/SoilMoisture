@@ -197,6 +197,7 @@ get_GPM<- function(roi,image, day) {
 write_csv <- function(today, value, data) {
   csv=paste(data,'.csv',sep='')
   r_csv <- read.csv(csv,sep=',',stringsAsFactors=FALSE,header=TRUE)
+  r_csv <- r_csv[order(r_csv$Date),]
   Date<-as.character(today)
   Data<-as.character(value)
   out_df <- data.frame(Date,Data)
