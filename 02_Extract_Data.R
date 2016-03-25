@@ -4,14 +4,14 @@ repos = "http://cran.us.r-project.org"
 get.pkg <- function(pkg){
   loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
   if(!loaded){
-    print(paste("trying to install",pkg))
+    print(paste("trying to install", pkg))
     install.packages(pkg,dependencies=TRUE,repos=repos,lib='/home/carya/R/library')
     loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
     if(loaded){
       print(paste(pkg,"installed and loaded"))
     } 
     else {
-      stop(paste("could not install",pkg))
+      stop(paste("could not install", pkg))
     }    
   }
 }
@@ -197,6 +197,7 @@ get_GPM<- function(roi,image, day) {
 write_csv <- function(today, value, data) {
   csv=paste(data,'.csv',sep='')
   r_csv <- read.csv(csv,sep=',',stringsAsFactors=FALSE,header=TRUE)
+  r_csv <- r_csv[order(r_csv$Date),]
   Date<-as.character(today)
   Data<-as.character(value)
   out_df <- data.frame(Date,Data)
@@ -243,7 +244,7 @@ if (in_name == "MOD") {
          write_csv(Date, value, 'SMAP')
      } else {
          value <- NA
-	 write_csv(Date, value, 'SMAP')
+     write_csv(Date, value, 'SMAP')
      print('No data for today for SMAP') }
 } else {
   print('ERROR: Unrecognized file format')
