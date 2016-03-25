@@ -39,7 +39,7 @@ time.rng = c(1,length(time)) ## adjust to zoom in and out
 out <- as.matrix(jags.out.original)
 ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
 
-plot(time,ci[2,],type='n',ylim=c(0,3),ylab="SoilMOisture",xlim=time[time.rng], main='Random Walk')
+plot(time,ci[2,],type='n',ylim=c(0,3),ylab="SoilMoisture",xlim=time[time.rng], main='Random Walk')
 ## adjust x-axis label to be monthly if zoomed
 if(diff(time.rng) < 100){ 
   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
