@@ -230,7 +230,6 @@ if (in_name == "MOD") {
     Date <- strptime(date_unformatted, "%Y%j")
     value <- get_ndvi(roi, input, date_unformatted)
     write_csv(Date, value, 'MODIS')
-    }
   } else if (in_name =="GPM") {
     date_unformatted <- as.integer(substr(input,33,40))
     Date <- strptime(date_unformatted, "%Y%m%d")
