@@ -6,7 +6,6 @@
 #------------- Loading libraries
 require(rjags)
 require(coda)
-library(rjags)
 
 
 #-------------plots a confidence interval around an x-y plot (e.g. a timeseries)
@@ -17,12 +16,13 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 #-------------load data and merge datasets
 #setwd("/Users/stanimirova/Desktop")  ## set working directory 
-data.root.path = '/Users/chichen/Desktop/'
+data.root.path = '/Users/stanimirova/Desktop/'
 SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
 GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
 MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 
+combined <- merge(SMAP, GPM, by="Date", sort=TRUE)
 
-predict.JAGS <- function(time,y) {
+predict.JAGS <- function(time,y,p) {
   library(rjags)
   RandomWalk = "
   model{
@@ -34,23 +34,30 @@ predict.JAGS <- function(time,y) {
   
   #### Process Model
   for(i in 2:n){
-  x[i]~dnorm(x[i-1],tau_add)
+  SoilMoisture[i] <- x[i-1] + mu + beta*p[i]
+  x[i]~dnorm(SoilMoisture[i],tau_add)
   }
+
+  ## initial condition
+  x[i,1] ~ dnorm(x_ic,tau_ic)
+  }  ## end loop over individuals
+  
   
   #### Priors
-  x[1] ~ dnorm(x_ic,tau_ic)
   tau_obs ~ dgamma(a_obs,r_obs)
   tau_add ~ dgamma(a_add,r_add)
+  mu <- dunif(0,1)
+  beta ~ dgamma(a_beta,r_beta)
   }
   "
   
-  data <- list(y=y,n=length(y),x_ic=0.4,tau_ic=100,a_obs=1,r_obs=1,a_add=1,r_add=1)
+  data <- list(y=y,p=p,n=length(y),x_ic=0.4,tau_ic=100,a_obs=1,r_obs=1,a_add=1,r_add=1, a_beta=1, r_beta=1)
   
   nchain = 3
   init <- list()
   for(i in 1:nchain){
     y.samp = sample(y,length(y),replace=TRUE)
-    init[[i]] <- list(tau_add=1/var(diff((y.samp))),tau_obs=5/var((y.samp)))
+    init[[i]] <- list(tau_add=1/var(diff((y.samp))),tau_obs=1/var((y.samp)))
   }
   
   j.model   <- jags.model (file = textConnection(RandomWalk),
@@ -63,7 +70,7 @@ predict.JAGS <- function(time,y) {
                               variable.names = c("tau_add","tau_obs"),
                               n.iter = 1000)
   # Only to plot 1000 iterations.  
-  plot(jags.out) 
+ # plot(jags.out) 
   
   jags.out   <- coda.samples (model = j.model,
                               variable.names = c("x","tau_add","tau_obs"),
@@ -78,18 +85,20 @@ predict.JAGS <- function(time,y) {
 
 time = as.Date(SMAP$Date)
 y = SMAP$Data
+p = GPM$Data
+
 
 # plot original weekly observation data
 plot(time,y,type='l',ylab="Flu Index",lwd=2,main='original weekly observations')
 
-jags.out.original = predict.JAGS(time,y)
+jags.out.original = predict.JAGS(time,y, p)
 
 par(mfrow=c(1,1))
 
 # plot the original result (weekly observation frequency)
 time.rng = c(1,length(time)) ## adjust to zoom in and out
 out <- as.matrix(jags.out.original)
-ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
+ci <- apply(out[,3:ncol(out)],2,quantile,c(0.025,0.5,0.975))
 
 plot(time,ci[2,],type='n',ylim=c(0,3),ylab="SoilMOisture",xlim=time[time.rng], main='Model fitted by full weekly observations')
 ## adjust x-axis label to be monthly if zoomed

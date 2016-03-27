@@ -4,6 +4,8 @@ Fusing Times-Series Data in a State Space Model: SMAP, GMP and MODIS
 load in libraries
 
 ```{r}
+require(rjags)
+require(coda)
 library(rjags)
 ```
 
@@ -18,7 +20,7 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 load data and merge datasets
 ```{r}
-setwd("/home/carya/SoilMoisture/")  ## set working directory 
+setwd("/Users/stanimirova/Desktop")  ## set working directory 
 
 SMAP <- read.csv("SMAP.csv")    ## read in soil moisture data 
 GPM <- read.csv("GPM.csv")      ## read in precipitation data 
@@ -26,6 +28,7 @@ MODIS <- read.csv("MODIS.csv")  ##read in MODIS data
     
 ## merge three datasets
 combined <- Reduce(function(x,y) merge(x, y, by="Date", all=TRUE), list(SMAP, GPM, MODIS))
+colnames(combined) <- c("Date", "NDVI", "Precip", "SoilMoisture")
 
 ```
 
@@ -33,20 +36,23 @@ combined <- Reduce(function(x,y) merge(x, y, by="Date", all=TRUE), list(SMAP, GP
 format the data into a list for input into JAGS
 
 ```{r}
-data <- list(y=combined[,2],  # soil moisture 
-             z=combined[,3],  # precipitation
-             w=combined[,4],  # reflectance
-             nt=length(y),    # number of observations over time
-             x_ic=1000,
-             tau_ic=100,      # error initial conditions
-             a_sm=1,
-             r_sm=1,         
-             a_p=1, 
-             r_p=1,         
-             a_r=1, 
-             r_r=1,          
-             a_add=1,
-             r_add=1)  
+data <- list(sm=combined$SoilMoisture,  # soil moisture 
+             p=combined$Precip,  # precipitation
+            # w=combined[,4],  # reflectance
+             nt=length(combined$SoilMoisture),    # number of observations over time
+             x_ic=1,       # initial conditions for latent variable
+             tau_ic=0.001,      # error initial conditions
+             s1_sm=1,         # shape 1 for beta distribution soil moisture
+             s2_sm=1,         # shape 2 for beta distribution soil moisture
+            # a_p=1,           # shape for gamma distr precipitation 
+            # r_p=1,         
+            # a_r=1, 
+            # r_r=1,          
+             a_add=1,         # shape for gamma distribution process error 
+             r_add=1        # scale for gamma distribution process error
+)        
+
+str(data)
 
 ## seasonal fixed effect 
 
@@ -55,50 +61,84 @@ data <- list(y=combined[,2],  # soil moisture
 run the JAGS model
 
 ```{r}
+
+SoilMoistureFusion = "
 model{
 
   #### Data Model: soil moisture
   for(t in 1:nt){
-    y[t] ~ dnorm(x[t],tau_sm)
+    sm[t] ~ dnorm(x[t],tau_sm)
   }
   
-  #### Data Model: precipitation
-  for(t in 1:nt){
-    z[t] ~ dgamma(alpha,beta)
-  }
+#   #### Data Model: precipitation
+#   for(t in 1:nt){
+#     p[t] ~ dnorm(p[t],tau_sm)
+#   }
   
-  #### Data Model: reflectance
-  for(t in 1:nt){
-    w[t] ~ dnorm(w[t],tau_p)
-  }
+#   #### Data Model: reflectance
+#   for(t in 1:nt){
+#     w[t] ~ dnorm(w[t],tau_p)
+#   }
   
   #### Process Model
   # the extected soil moisture given the previous soil moisture and the precipitation and reflectance
   for(t in 1:nt){
-    SoilMoist[t] <- x[t-1] + mu + sm[t] + p[t] + r[t] + year[t]
+    SoilMoist[t] <- x[t-1] + mu + p_fix*p[t]
     x[t]~dnorm(SoilMoist[t],tau_add)
   }
   
   
-  ## initial condition
-  x[i,1] ~ dnorm(x_ic,tau_ic)
-  
-  ## year effects
-  for(t in 1:nt){
-    year[t] ~ dnorm(0,tau_yr)
-  }
+#   ## season effects
+#   for(t in 1:nt){
+#     year[t] ~ dnorm(0,tau_yr)
+#   }
   
   #### Priors
-  tau_sm ~ dgamma(a_sm,r_sm)       # obs error soil moisture
-  tau_p ~  dgamma(a_p,r_p)         # obs error precipitation
-  tau_r ~  dgamma(a_r,r_r)         # obs error reflectance
-  tau_add ~ dgamma(a_add,r_add)    # process error 
-  tau_ind ~ dgamma(1,0.1)
-  tau_yr  ~ dgamma(1,0.1)
+  x[1] ~ dnorm(x_ic,tau_ic)         # initial condition
+  tau_sm ~ dbeta(s1_sm,s2_sm)       # obs error soil moisture
+  #tau_p ~  dgamma(a_p,r_p)         # obs error precipitation
+  #tau_r ~  dgamma(a_r,r_r)         # obs error reflectance
+  tau_add ~ dgamma(a_add,r_add)     # process error 
+  #tau_yr  ~ dgamma(1,0.1)
   mu ~ dnorm(0.5,0.5)
+  p_fix ~ dgamma(1,1)               # fixed effect for precip, change model later
   
-  }
+  }"
 ```
 
 
+run JAGS
+
+```{r}
+n.iter=500  
+
+## state variable initial condition
+  sm0 =  rep(mean(data$sm, na.rm=TRUE), length(data$sm))
+
+  ## JAGS initial conditions
+  nchain = 3
+  init <- list()
+  for(i in 1:nchain){
+    y.samp = sample(data$sm,length(data$sm),replace=TRUE)
+    init[[i]] <- list(tau_add=1/var(diff(y.samp),na.rm=TRUE), tau_sm=1)
+  }
+
+  ## compile JAGS model
+  j.model   <- jags.model (file = textConnection(SoilMoistureFusion),
+                           data = data,
+                           inits = init,
+                           n.chains = 3)
+  ## burn-in
+  jags.out   <- coda.samples (model = j.model,
+                              variable.names = c("tau_add","tau_dbh","tau_inc","mu","tau_ind","tau_yr"),
+                              n.iter = min(n.iter,2000))
+  plot(jags.out)
+
+  ## run MCMC
+  jags.out   <- coda.samples (model = j.model,
+                              variable.names = c("x","tau_add","tau_dbh","tau_inc","mu",
+                                                 "tau_ind","tau_yr","ind","year"),
+                              n.iter = n.iter)
+
+```
 visualize the output
