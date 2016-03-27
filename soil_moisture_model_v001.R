@@ -23,18 +23,19 @@ predict.JAGS <- function(time,y,p) {
   x[i]~dnorm(SoilMoisture[i],tau_add)
   }
 
-  ## initial condition
-  x[1] ~ dunif(x_ic_lower,x_ic_upper)  
+
   
   #### Priors
   tau_obs ~ dgamma(a_obs,r_obs)
   tau_add ~ dgamma(a_add,r_add)
-  mu <- dunif(0,1)
+  mu ~ dunif(0,1)
   beta ~ dgamma(a_beta,r_beta)
+  ## initial condition
+  x[1] ~ dunif(x_ic_lower,x_ic_upper)  
   }
   "
   
-  data <- list(y=y,p=p, n=length(y),x_ic_lower=0,x_ic_upper=1,a_obs=1,r_obs=1,a_add=1,r_add=1, a_beta=1, r_beta=1)
+  data <- list(y=y,p=p, n=length(y),x_ic_lower=0,x_ic_upper=1, a_obs=1,r_obs=1,a_add=1,r_add=1, a_beta=1, r_beta=1)
 
   
   nchain = 3
