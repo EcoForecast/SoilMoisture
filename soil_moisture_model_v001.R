@@ -1,6 +1,7 @@
 # We aim to fuse Times-Series Data in a State Space Model: SMAP, GMP and MODIS
 
 # Comment by Chi . 03/25/2016
+# Comment by Radost . 03/27/2016
 # In this test, soilmoisture is a random walk model
 
 ###################
@@ -19,7 +20,7 @@ predict.JAGS <- function(time,y,p) {
   
   #### Process Model
   for(i in 2:n){
-  SoilMoisture[i] <- x[i-1] + mu + beta*p[i]
+  SoilMoisture[i] <- x[i-1] + mu + p_fix*p[i]
   x[i]~dnorm(SoilMoisture[i],tau_add)
   }
 
@@ -29,13 +30,13 @@ predict.JAGS <- function(time,y,p) {
   tau_obs ~ dgamma(a_obs,r_obs)
   tau_add ~ dgamma(a_add,r_add)
   mu ~ dunif(0,1)
-  beta ~ dgamma(a_beta,r_beta)
+  p_fix ~ dgamma(a_beta,r_beta)
   ## initial condition
   x[1] ~ dunif(x_ic_lower,x_ic_upper)  
   }
   "
   
-  data <- list(y=y,p=p, n=length(y),x_ic_lower=0,x_ic_upper=1, a_obs=1,r_obs=1,a_add=1,r_add=1, a_beta=1, r_beta=1)
+  data <- list(y=y,p=p, n=length(y),x_ic_lower=0,x_ic_upper=1, a_obs=1,r_obs=1,a_add=1,r_add=1, a_beta=1, r_beta=2)
 
   
   nchain = 3
@@ -76,16 +77,22 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 #-------------load data and merge datasets
 #setwd("/Users/stanimirova/Desktop")  ## set working directory 
-#data.root.path = '/Users/chichen/Desktop/'
+data.root.path = '/Users/stanimirova/Desktop/'
+# Soil Moisture (cm^3 of water per cm^3 of soil)
 SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
 GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
 MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 
+## merge three datasets
+combined <- Reduce(function(x,y) merge(x, y, by="Date", all=TRUE, sort=TRUE), list(SMAP, GPM, MODIS))
+colnames(combined) <- c("Date", "NDVI", "Precip", "SoilMoisture")
+
 
 
 #-------------Run JAGS, and Do some plots
 time = as.Date(SMAP$Date)
-y = SMAP$Data
-p = GPM$Data
+y = combined$SMAP
+p = combined$GPM
+n = combined$MODIS
 
 
 # plot original weekly observation data
