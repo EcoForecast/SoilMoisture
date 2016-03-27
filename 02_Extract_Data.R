@@ -4,21 +4,21 @@ repos = "http://cran.us.r-project.org"
 get.pkg <- function(pkg){
   loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
   if(!loaded){
-    print(paste("trying to install",pkg))
+    print(paste("trying to install", pkg))
     install.packages(pkg,dependencies=TRUE,repos=repos,lib='/home/carya/R/library')
     loaded <- do.call("require",list(package=pkg,lib.loc='/home/carya/R/library'))
     if(loaded){
       print(paste(pkg,"installed and loaded"))
     } 
     else {
-      stop(paste("could not install",pkg))
+      stop(paste("could not install", pkg))
     }    
   }
 }
+get.pkg("sp")
 get.pkg("raster")
 get.pkg("gdalUtils")
 get.pkg("rgdal")
-get.pkg("sp")
 get.pkg("optparse")
 
 suppressPackageStartupMessages(library("optparse"))
@@ -85,7 +85,7 @@ get_ndvi <- function(roi, image, day){
   roi_rep <- spTransform(roi, CRS(projection(ndvi)))
   ndvi_value <- extract(ndvi,roi_rep)
   cloud_int <- extract(cloudraster,roi_rep)
-  get.pkg('R.utils')
+#  get.pkg('R.utils')
   #cloud_bit <- intToBin(cloud_int)
   cloud_bit <- as.numeric(intToBits(cloud_int))
   
@@ -100,7 +100,7 @@ get_ndvi <- function(roi, image, day){
   QA_ST15 = 1.*cloud_bit[16] # Internal snow mask
 
   if (!(QA_ST0_1==0 & QA_ST2==0 & QA_ST10==0 & QA_ST11==0 & QA_ST12==0 & QA_ST13==0 & QA_ST15==0 & QA_ST8_9<=1 & (QA_ST6_7==1 |QA_ST6_7==2))) {
-     ndvi_value = -9999
+     ndvi_value = NA
   }
 
   return(ndvi_value)
@@ -197,6 +197,7 @@ get_GPM<- function(roi,image, day) {
 write_csv <- function(today, value, data) {
   csv=paste(data,'.csv',sep='')
   r_csv <- read.csv(csv,sep=',',stringsAsFactors=FALSE,header=TRUE)
+  r_csv <- r_csv[order(r_csv$Date),]
   Date<-as.character(today)
   Data<-as.character(value)
   out_df <- data.frame(Date,Data)
@@ -228,11 +229,7 @@ if (in_name == "MOD") {
     print(date_unformatted)
     Date <- strptime(date_unformatted, "%Y%j")
     value <- get_ndvi(roi, input, date_unformatted)
-    if (as.integer(value) > -9998) {
-         write_csv(Date, value, 'MODIS')
-    } else {
-      print("Too cloudy to calculate")
-    }
+    write_csv(Date, value, 'MODIS')
   } else if (in_name =="GPM") {
     date_unformatted <- as.integer(substr(input,33,40))
     Date <- strptime(date_unformatted, "%Y%m%d")
@@ -245,6 +242,8 @@ if (in_name == "MOD") {
     if (as.integer(value) >= 0) {
          write_csv(Date, value, 'SMAP')
      } else {
+         value <- NA
+     write_csv(Date, value, 'SMAP')
      print('No data for today for SMAP') }
 } else {
   print('ERROR: Unrecognized file format')

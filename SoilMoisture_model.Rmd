@@ -27,7 +27,7 @@ GPM <- read.csv("GPM.csv")      ## read in precipitation data
 MODIS <- read.csv("MODIS.csv")  ##read in MODIS data 
     
 ## merge three datasets
-combined <- Reduce(function(x,y) merge(x, y, by="Date", all=TRUE), list(SMAP, GPM, MODIS))
+combined <- Reduce(function(x,y) merge(x, y, by="Date", all=TRUE, sort=TRUE), list(SMAP, GPM, MODIS))
 colnames(combined) <- c("Date", "NDVI", "Precip", "SoilMoisture")
 
 ```
