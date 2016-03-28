@@ -1,6 +1,6 @@
 #Written Chi, 03/27/2016
 # 1. this script is going to re-organize our data by date. This is a temporary code to fix the data organizing issues.
-# 2. I will take the mean if there are more than one daily observations
+# 2. It will take the mean if there are more than one daily observations
 # 3. Combine multiple data sources. The starting day of the output will be the first day that we have soilmoisture data.
 # 4. The object "combined" will be the final output. Check it and you will understand it.
 # 5. Copy this code to your code
@@ -12,7 +12,7 @@ MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS dat
 
 preprocess.Data <- function(x){ 
   x=x[with(x,order(x$Date)),]
-  value = tapply(x$Data,x$Date,mean)
+  value = tapply(x$Data,x$Date,mean,na.rm=TRUE)
   out = data.frame(Date=rownames(value),Data=value)
   rownames(out)=as.character(seq(1,length(value)))
   return(out)
