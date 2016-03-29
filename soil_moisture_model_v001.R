@@ -76,7 +76,7 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 
 #-------------load data and merge datasets
-#setwd("/Users/stanimirova/Desktop")  ## set working directory 
+## set working directory 
 data.root.path = '/home/carya/SoilMoisture/example'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
@@ -109,7 +109,7 @@ out <- as.matrix(jags.out.original)
 
 ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
 
-plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="SoilMoisture",xlim=time[time.rng], main='SoilMoisturePrecipFusion')
+plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoisturePrecipFusion')
 ## adjust x-axis label to be monthly if zoomed
 # if(diff(time.rng) < 100){ 
 #   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
