@@ -73,7 +73,7 @@ ftp = ftp_connect("jsimpson.pps.eosdis.nasa.gov", usern, passw, "NRTPUB/imerg/gi
 for i in range(month):
     m = str(i + 1).zfill(2)
     ftp.cwd(m)
-    download_files(ftp, "1410.V03E.1day")
+    download_files(ftp, "1410.V03E.1day.t")
     ftp.cwd('..')  # We ned to go back to previous level
 
 # For older years
@@ -83,7 +83,7 @@ for y in range(2015, year):  # Data starts in 2015
         m = str(i + 1).zfill(2)
         try:
             ftp.cwd(m)
-            download_files(ftp, "1410.V03E.1day")
+            download_files(ftp, "1410.V03E.1day.t")
             ftp.cwd('..')
             print ftp.pwd()
         except ftplib.error_perm, resp:
