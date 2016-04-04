@@ -73,8 +73,9 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 #-------------load data and merge datasets
 #setwd("/Users/stanimirova/Desktop")  ## set working directory 
-data.root.path = '~/sample/combined_data.csv'
-
+#data.root.path = '~/example/combined_data.csv'
+data.root.path = '/Users/chichen/Desktop/2016Spring/GE585/SoilMoisture/example/combined_data.csv'
+combined = read.csv(data.root.path)
 #-------------Run JAGS, and Do some plots
 time = as.Date(combined$Date)
 y = combined$SoilMoisture
