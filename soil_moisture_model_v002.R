@@ -73,54 +73,7 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 #-------------load data and merge datasets
 #setwd("/Users/stanimirova/Desktop")  ## set working directory 
-data.root.path = '/Users/chichen/Desktop/'
-SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
-GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
-MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 
-
-preprocess.Data <- function(x){ 
-  x=x[with(x,order(x$Date)),]
-  value = tapply(x$Data,x$Date,mean,na.rm=TRUE)
-  out = data.frame(Date=rownames(value),Data=value)
-  rownames(out)=as.character(seq(1,length(value)))
-  return(out)
-}
-MODIS=preprocess.Data(MODIS)
-GPM = preprocess.Data(GPM)
-SMAP = preprocess.Data(SMAP)
-
-
-Date.Start = min(as.numeric(as.Date(GPM[,1])),as.numeric(as.Date(MODIS[,1])),as.numeric(as.Date(SMAP[,1])))
-Date.End = max(as.numeric(as.Date(GPM[,1])),as.numeric(as.Date(MODIS[,1])),as.numeric(as.Date(SMAP[,1])))
-combined = data.frame(Date=as.Date(character()),
-                      NDVI=numeric(), 
-                      Precip=numeric(),  
-                      SoilMoisture=numeric()) 
-n=0
-for (idate in Date.Start:Date.End){
-  n=n+1
-  i_this_day = as.Date(idate,origin="1970-01-01")
-  combined[n,1]=i_this_day
-  ndvi = MODIS[as.Date(MODIS$Date)==i_this_day,2]
-  if (is.null(ndvi)|length(ndvi)==0) {
-    ndvi=NA}
-  
-  precip = GPM[as.Date(GPM$Date)==i_this_day,2]
-  if (is.null(precip)|length(precip)==0) {
-    precip=0} ## note that change precip to NA later
-  
-  smap = SMAP[as.Date(SMAP $Date)==i_this_day,2]
-  if (is.null(smap)|length(smap)==0) {
-    smap=NA}
-  
-  combined[n,2]=ndvi
-  combined[n,3]=precip
-  combined[n,4]=smap
-}
-NonNAindex <- min(which(!is.na(combined$SoilMoisture)))-1
-combined=combined[-(1:NonNAindex),]
-row.names(combined) <- 1:nrow(combined)
-
+data.root.path = '~/sample/combined_data.csv'
 
 #-------------Run JAGS, and Do some plots
 time = as.Date(combined$Date)

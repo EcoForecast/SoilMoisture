@@ -39,7 +39,7 @@ for (idate in Date.Start:Date.End){
   
   precip = GPM[as.Date(GPM$Date)==i_this_day,2]
   if (is.null(precip)|length(precip)==0) {
-    precip=NA}
+    precip=0} ## note that change precip to NA later
   
   smap = SMAP[as.Date(SMAP $Date)==i_this_day,2]
   if (is.null(smap)|length(smap)==0) {
@@ -51,9 +51,4 @@ for (idate in Date.Start:Date.End){
 }
 NonNAindex <- min(which(!is.na(combined$SoilMoisture)))-1
 combined=combined[-(1:NonNAindex),]
-
-
-
-
-
-
+row.names(combined) <- 1:nrow(combined)
