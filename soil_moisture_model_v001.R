@@ -12,14 +12,14 @@ predict.JAGS <- function(time,y,p,t,v) {
   model{
   
   #### Data Model
-  for(i in 1:t){
-  y[i] ~ dnorm(x[i],tau_obs)
+  for(t in 1:nt){
+  y[t] ~ dnorm(x[t],tau_obs)
   }
   
   #### Process Model
-  for(i in 2:t){
-  SoilMoisture[i] <- beta_0*x[i-1] + beta_1*p[i] - beta_2*n[1]*x[i-1]
-  x[i]~dnorm(SoilMoisture[i],tau_add)
+  for(t in 2:nt){
+  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[1]*x[t-1]
+  x[t]~dnorm(SoilMoisture[t],tau_add)
   }
   
   #### Priors
@@ -33,7 +33,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   }
   "
   
-  data <- list(y=log(y),p=p,n=n, t=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
+  data <- list(y=log(y),p=p,n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
                r_obs=0.01,a_add=0.01, r_add=1, a_beta0=1,r_beta0=0.5, a_beta1=1, r_beta1=0.001,
                a_beta2=0.05,r_beta2=9)
   
