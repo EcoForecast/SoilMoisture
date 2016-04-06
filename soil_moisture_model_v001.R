@@ -18,7 +18,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   #### Process Model
   for(t in 2:nt){
-  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] + ind[t] - beta_2*n[1]*x[t-1]
+  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[1]*x[t-1]
   x[t]~dnorm(SoilMoisture[t],tau_add)
   }
   
@@ -62,7 +62,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   ## burn-in
   jags.out   <- coda.samples (model = j.model,
-                              variable.names = c("tau_add","tau_obs"),
+                              variable.names = c("tau_add","tau_obs","beta_0","beta_1","beta_2","tau_ind"),
                               n.iter = 1000)
   # Only to plot 1000 iterations.  
   
@@ -70,7 +70,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   
   jags.out   <- coda.samples (model = j.model,
-                              variable.names = c("x","tau_add","tau_obs"),
+                              variable.names = c("x","tau_add","tau_obs","beta_0","beta_1","beta_2","tau_ind"),
                               n.iter = 10000)
   
   #summary of the final 10000 iteration jags.out
