@@ -90,7 +90,15 @@ ciEnvelope <- function(x,ylo,yhi,...){
 data.root.path = 'C:/OneDrive/Spring_2016/GE585/SoilMoisture/example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
-combined <- na.omit(combined) # This line will be removed once we have the interpolation in place
+
+#remove NA values
+install.packages('zoo')
+require(zoo)
+#interpolate between values keeping NA
+combined$NDVI<-na.approx(combined$NDVI,na.rm=FALSE)    #reset
+#apply last available to NA values
+combined$NDVI<-na.locf(combined$NDVI,na.rm=FALSE)   
+combined<-combined[!(is.na(combined$NDVI) | combined$NDVI==""), ]    #remove NA values at beginning
 
 
 #-------------Run JAGS, and Do some plots
