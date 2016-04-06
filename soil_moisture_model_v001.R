@@ -18,9 +18,16 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   #### Process Model
   for(t in 2:nt){
-  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[1]*x[t-1]
+  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] + ind[t] - beta_2*n[1]*x[t-1]
   x[t]~dnorm(SoilMoisture[t],tau_add)
   }
+  
+  
+  ## Daily effects - will be replace by 'seasonal effect'
+  for(t in 1:nt){
+    ind[t] ~ dnorm(0,tau_ind)  
+  }
+  
   
   #### Priors
   tau_obs ~ dgamma(a_obs,r_obs)
@@ -28,22 +35,24 @@ predict.JAGS <- function(time,y,p,t,v) {
   beta_0 ~ dbeta(a_beta0,r_beta0)
   beta_1 ~ dgamma(a_beta1,r_beta1)
   beta_2 ~ dgamma(a_beta2,r_beta2)
+  tau_ind ~ dgamma(0.01,0.01)
+
   ## initial condition
   x[1] ~ dunif(x_ic_lower,x_ic_upper)  
   }
   "
   
-  data <- list(y=log(y),p=p,n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
+  data <- list(y=log(y),p=p, n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
                r_obs=0.01,a_add=0.01, r_add=1, a_beta0=1,r_beta0=0.5, a_beta1=1, r_beta1=0.001,
                a_beta2=0.05,r_beta2=9)
-  
-  
+
   
   nchain = 3
   init <- list()
   for(i in 1:nchain){
     y.samp = sample(y,length(y),replace=TRUE)
-    init[[i]] <- list(tau_add=1/var(diff((log(y.samp)))),tau_obs=1/var((log(y.samp))))
+    init[[i]] <- list(tau_add=1/var(diff((log(y.samp)))),tau_obs=1/var((log(y.samp))), 
+                      ind=rep(0,length(y)), tau_ind=0.01)
   }
   
   j.model   <- jags.model (file = textConnection(SoilMoisturePrecipFusion),
@@ -75,17 +84,13 @@ ciEnvelope <- function(x,ylo,yhi,...){
 }
 
 
-#-------------load data and merge datasets
+#-------------load data from combined csv
 ## set working directory 
-data.root.path = '/home/carya/SoilMoisture/example'
+#data.root.path = '/home/carya/SoilMoisture/example'
+data.root.path = 'C:/OneDrive/Spring_2016/GE585/SoilMoisture/example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
-SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
-GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
-MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 
-## merge three datasets
-combined <- Reduce(function(x,y) merge(x, y, by="Date"), list(MODIS, GPM, SMAP))
-colnames(combined) <- c("Date", "NDVI", "Precip", "SoilMoisture")
-
+combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
+combined <- na.omit(combined) # This line will be removed once we have the interpolation in place
 
 
 #-------------Run JAGS, and Do some plots
