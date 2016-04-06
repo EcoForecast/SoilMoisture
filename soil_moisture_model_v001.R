@@ -86,8 +86,8 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 #-------------load data from combined csv
 ## set working directory 
-#data.root.path = '/home/carya/SoilMoisture/example'
-data.root.path = 'C:/OneDrive/Spring_2016/GE585/SoilMoisture/example/'
+data.root.path = '/home/carya/SoilMoisture/example'
+#data.root.path = 'C:/Users/condo/Documents/SoilMoisture/example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
 
@@ -120,7 +120,7 @@ par(mfrow=c(1,1))
 time.rng = c(1,length(time)) ## adjust to zoom in and out
 out <- as.matrix(jags.out.original)
 
-ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
+ci <- apply(exp(out[,7:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
 
 plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoisturePrecipFusion')
 ## adjust x-axis label to be monthly if zoomed
