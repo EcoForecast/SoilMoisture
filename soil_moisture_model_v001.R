@@ -4,21 +4,23 @@
 
 ###################
 #------------------ sub-routines,set your JAGS model here
-predict.JAGS <- function(time,y,p,t,v) {
+predict.JAGS <- function(time,y,p,t,n) {
   require(rjags)
   require(coda)
   
   SoilMoisturePrecipFusion = "
   model{
   
-  #### Data Model
+  #### Data Model for soilmoisture
   for(t in 1:nt){
   y[t] ~ dnorm(x[t],tau_obs)
   }
   
+  
   #### Process Model
   for(t in 2:nt){
   SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[t]*x[t-1]
+  #SoilMoisture[t] <- beta_0*x[t-1] + beta_1*mup[t] - beta_2*n[t]*x[t-1]
   x[t]~dnorm(SoilMoisture[t],tau_add)
   }
   
@@ -36,9 +38,10 @@ predict.JAGS <- function(time,y,p,t,v) {
   beta_1 ~ dgamma(a_beta1,r_beta1)
   beta_2 ~ dgamma(a_beta2,r_beta2)
   tau_ind ~ dgamma(0.01,0.01)
+  #tau_obs_p~ dgamma(1,1)
 
   ## initial condition
-  x[1] ~ dunif(x_ic_lower,x_ic_upper)  
+  x[1] ~ dunif(x_ic_lower,x_ic_upper) 
   }
   "
   
@@ -86,20 +89,25 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 #-------------load data from combined csv
 ## set working directory 
-data.root.path = '/home/carya/SoilMoisture/example'
+#data.root.path = '/home/carya/SoilMoisture/example'
 #data.root.path = 'C:/Users/condo/Documents/SoilMoisture/example/'
+data.root.path = './example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
 
 #remove NA values
-install.packages('zoo')
+#install.packages('zoo')
 require(zoo)
 #interpolate between values keeping NA
 combined$NDVI<-na.approx(combined$NDVI,na.rm=FALSE)    #reset
 #apply last available to NA values
-combined$NDVI<-na.locf(combined$NDVI,na.rm=FALSE)   
-combined<-combined[!(is.na(combined$NDVI) | combined$NDVI==""), ]    #remove NA values at beginning
+combined$NDVI<-na.locf(combined$NDVI,na.rm=FALSE)
 
+#apply first valid value to NA values at beginning
+idx.not.na=which(!is.na(combined$NDVI))
+combined$NDVI[is.na(combined$NDVI)]<-combined$NDVI[idx.not.na[1]]
+
+#combined$Precip[100]=NA
 
 #-------------Run JAGS, and Do some plots
 time = as.Date(combined$Date)
@@ -109,7 +117,7 @@ n = combined$NDVI
 
 
 # plot original weekly observation data
-plot(time,y,type='l',ylab="SoilMoisture",lwd=2,main='Daily SoilMoisture')
+plot(time,y,ylab="SoilMoisture",lwd=2,main='Daily SoilMoisture')
 
 jags.out.original = predict.JAGS(time,y, p,t,n)
 
@@ -122,7 +130,7 @@ out <- as.matrix(jags.out.original)
 
 ci <- apply(exp(out[,7:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
 
-plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoisturePrecipFusion')
+plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoisturePrecipFusion')
 ## adjust x-axis label to be monthly if zoomed
 # if(diff(time.rng) < 100){ 
 #   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")

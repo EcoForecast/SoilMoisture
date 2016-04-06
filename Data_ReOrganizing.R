@@ -52,4 +52,6 @@ for (idate in Date.Start:Date.End){
 NonNAindex <- min(which(!is.na(combined$SoilMoisture)))-1
 combined=combined[-(1:NonNAindex),]
 row.names(combined) <- 1:nrow(combined)
+
+
 write.table(combined,file = paste(data.root.path,'combined_data.csv',sep=""),na="NA",row.names=FALSE,col.names=TRUE,sep=",")
