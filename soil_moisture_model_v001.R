@@ -18,7 +18,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   #### Process Model
   for(t in 2:nt){
-  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[1]*x[t-1]
+  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[t]*x[t-1]
   x[t]~dnorm(SoilMoisture[t],tau_add)
   }
   
