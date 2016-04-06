@@ -5,7 +5,7 @@
 # 4. The object "combined" will be the final output. Check it and you will understand it.
 # 5. Copy this code to your code
 
-data.root.path = '/Users/chichen/Desktop/'
+data.root.path = './example/'
 SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
 GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
 MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 
@@ -39,7 +39,7 @@ for (idate in Date.Start:Date.End){
   
   precip = GPM[as.Date(GPM$Date)==i_this_day,2]
   if (is.null(precip)|length(precip)==0) {
-    precip=0} ## note that change precip to NA later
+    precip=0} ## note that change precip to NA if necessary
   
   smap = SMAP[as.Date(SMAP $Date)==i_this_day,2]
   if (is.null(smap)|length(smap)==0) {
@@ -52,3 +52,4 @@ for (idate in Date.Start:Date.End){
 NonNAindex <- min(which(!is.na(combined$SoilMoisture)))-1
 combined=combined[-(1:NonNAindex),]
 row.names(combined) <- 1:nrow(combined)
+write.table(combined,file = paste(data.root.path,'combined_data.csv',sep=""),na="NA",row.names=FALSE,col.names=TRUE,sep=",")
