@@ -18,7 +18,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   #### Process Model
   for(t in 2:nt){
-  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] + ind[t] - beta_2*n[1]*x[t-1]
+  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[1]*x[t-1]
   x[t]~dnorm(SoilMoisture[t],tau_add)
   }
   
@@ -62,7 +62,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   ## burn-in
   jags.out   <- coda.samples (model = j.model,
-                              variable.names = c("tau_add","tau_obs"),
+                              variable.names = c("tau_add","tau_obs","beta_0","beta_1","beta_2","tau_ind"),
                               n.iter = 1000)
   # Only to plot 1000 iterations.  
   
@@ -70,7 +70,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   
   jags.out   <- coda.samples (model = j.model,
-                              variable.names = c("x","tau_add","tau_obs"),
+                              variable.names = c("x","tau_add","tau_obs","beta_0","beta_1","beta_2","tau_ind"),
                               n.iter = 10000)
   
   #summary of the final 10000 iteration jags.out
@@ -86,11 +86,19 @@ ciEnvelope <- function(x,ylo,yhi,...){
 
 #-------------load data from combined csv
 ## set working directory 
-#data.root.path = '/home/carya/SoilMoisture/example'
-data.root.path = 'C:/OneDrive/Spring_2016/GE585/SoilMoisture/example/'
+data.root.path = '/home/carya/SoilMoisture/example'
+#data.root.path = 'C:/Users/condo/Documents/SoilMoisture/example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
-combined <- na.omit(combined) # This line will be removed once we have the interpolation in place
+
+#remove NA values
+install.packages('zoo')
+require(zoo)
+#interpolate between values keeping NA
+combined$NDVI<-na.approx(combined$NDVI,na.rm=FALSE)    #reset
+#apply last available to NA values
+combined$NDVI<-na.locf(combined$NDVI,na.rm=FALSE)   
+combined<-combined[!(is.na(combined$NDVI) | combined$NDVI==""), ]    #remove NA values at beginning
 
 
 #-------------Run JAGS, and Do some plots
@@ -112,7 +120,7 @@ par(mfrow=c(1,1))
 time.rng = c(1,length(time)) ## adjust to zoom in and out
 out <- as.matrix(jags.out.original)
 
-ci <- apply(exp(out[,3:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
+ci <- apply(exp(out[,7:ncol(out)]),2,quantile,c(0.025,0.5,0.975))
 
 plot(time,ci[2,],type='n',ylim=range(y,na.rm=TRUE),ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoisturePrecipFusion')
 ## adjust x-axis label to be monthly if zoomed
