@@ -16,14 +16,12 @@ predict.JAGS <- function(time,y,p,t,n) {
   y[t] ~ dnorm(x[t],tau_obs)
   }
   
-  
   #### Process Model
   for(t in 2:nt){
   SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t] - beta_2*n[t]*x[t-1]
   #SoilMoisture[t] <- beta_0*x[t-1] + beta_1*mup[t] - beta_2*n[t]*x[t-1]
   x[t]~dnorm(SoilMoisture[t],tau_add)
   }
-  
   
   ## Daily effects - will be replace by 'seasonal effect'
   for(t in 1:nt){
@@ -38,7 +36,6 @@ predict.JAGS <- function(time,y,p,t,n) {
   beta_1 ~ dgamma(a_beta1,r_beta1)
   beta_2 ~ dgamma(a_beta2,r_beta2)
   tau_ind ~ dgamma(0.01,0.01)
-  #tau_obs_p~ dgamma(1,1)
 
   ## initial condition
   x[1] ~ dunif(x_ic_lower,x_ic_upper) 
