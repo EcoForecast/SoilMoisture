@@ -95,7 +95,7 @@ data.root.path = '/Users/ericbullock/Google Drive/Class/Ecological_Forecasting/P
 #data.root.path = 'C:/Users/condo/Documents/SoilMoisture/example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
-combined<-combined[0:50,]
+combined<-combined[0:55,]
 #remove NA values
 require(zoo)
 #interpolate between values keeping NA
@@ -105,15 +105,12 @@ combined$NDVI<-na.locf(combined$NDVI,na.rm=FALSE)
 combined<-combined[!(is.na(combined$NDVI) | combined$NDVI==""), ]    #remove NA values at beginning
 
 
-for(t in 1:length(NA.indices)){
-  print(t)
-}
 
 #-------------Run JAGS, and Do some plots
 time = as.Date(combined$Date)
 y = combined$SoilMoisture
 p = combined$Precip
-
+p[0:5] <- NA
 NA.indices <- which(is.na(p))
 n = combined$NDVI
 
@@ -143,3 +140,7 @@ points(time[1:20],y[1:20],pch="o",col="red",cex=2)
 points(time,p/1000,pch="o",col="blue",cex=1)
 points(time,n/2,pch="o",col="green",cex=1)
 lines(time,ci[2,])
+
+#Save output
+file_name = 'Jags.out.file'
+save(ci, file = file_name)
