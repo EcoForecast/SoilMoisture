@@ -1,7 +1,7 @@
 # We aim to fuse Times-Series Data in a State Space Model: SMAP, GMP and MODIS
 
 # In this test, soilmoisture is a SoilMoisturePrecipFusion model
-
+setwd('/Users/ericbullock/Google Drive/Class/Ecological_Forecasting/Project/SoilMoisture')
 ###################
 #------------------ sub-routines,set your JAGS model here
 #predict.JAGS <- function(time,y,p,t,v,NA.indices) {
@@ -57,7 +57,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   #data <- list(y=log(y),p=p, n=n, NA.indices=NA.indices, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
   data <- list(y=log(y),p=p, n=log(n), nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
-               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=1,r_beta0=0.5, a_beta1=2, r_beta1=2,
+               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=5, a_beta1=2, r_beta1=2,
                a_beta2=1,r_beta2=2, mu_p0=3, tau_p0=3)
   
   
@@ -76,7 +76,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   ## burn-in
   jags.out   <- coda.samples (model = j.model,
                               variable.names = c("tau_add","tau_obs","beta_0","beta_1","beta_2"),
-                              n.iter = 10000)
+                              n.iter = 1000)
   # Only to plot 1000 iterations.  
   
   #plot(jags.out) 
@@ -84,7 +84,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   jags.out   <- coda.samples (model = j.model,
                               variable.names = c("x","p","n","tau_add","tau_obs","tau_nobs","beta_0","beta_1","beta_2"),
-                              n.iter = 10000)
+                              n.iter = 1000)
   
   
   #summary of the final 10000 iteration jags.out
