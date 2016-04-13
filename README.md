@@ -22,4 +22,7 @@ SoilMoisture
 - HOME=/home/carya/SoilMoisture
 - 0 11 * * * cron_job.sh
 
+# Running scripts in the repository 
+- Scripts are numbered in the order in which they should be run 
+
 
