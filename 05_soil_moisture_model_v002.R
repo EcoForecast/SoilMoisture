@@ -1,7 +1,7 @@
 # We aim to fuse Times-Series Data in a State Space Model: SMAP, GMP and MODIS
 
 # In this test, soilmoisture is a SoilMoisturePrecipFusion model
-setwd('/Users/ericbullock/Google Drive/Class/Ecological_Forecasting/Project/SoilMoisture')
+#setwd('/Users/ericbullock/Google Drive/Class/Ecological_Forecasting/Project/SoilMoisture')
 ###################
 #------------------ sub-routines,set your JAGS model here
 #predict.JAGS <- function(time,y,p,t,v,NA.indices) {
@@ -165,3 +165,14 @@ prec = out[,grep("tau",colnames(out), value=TRUE)]
 for(i in 1:ncol(prec)){
   hist(1/sqrt(prec[,i]),main=colnames(prec)[i])
 }
+
+prec1 = out[,grep("tau|beta_0|beta_1|beta_2",colnames(out), value=TRUE)]
+cor(prec1)
+pairs(prec1)
+
+par(mfrow=c (1,1))
+plot(ci[2,], y,   xlab="Predicted", ylab="Observed", pch=20, xlim=range(y,na.rm=TRUE))
+lmfit <- lm(y~ci[2,])
+abline(lmfit, col="red")
+abline(0,1, col="blue", lwd=1.5, lty=2)
+summary(lmfit)
