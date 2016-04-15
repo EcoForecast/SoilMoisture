@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import csv
+import forecastio
 import sys
 import ftplib
 from ftplib import FTP
@@ -18,7 +20,7 @@ could be done just by using WGET.
 Args:
 	username (str): Email address (must be registered in GPM server to work for that product)
 	password (str): Same email address
-	
+
 
 """
 
@@ -151,3 +153,27 @@ def get_modis(product, sub, start_year):
 
 get_modis("MOD09GA", "h09v06", 2015)
 get_modis("MYD09GA", "h09v06", 2015)
+
+#Get rain forecast from Forecast.io
+api_key = "bc6ba93a1079777ad112ee263138b8bd"
+lat = 29.93
+lng = -98.01
+forecast = forecastio.load_forecast(api_key, lat, lng)
+byday = forecast.daily()
+precipProbability=[]
+precipIntensity=[]
+#First day is today at 5 AM, every day after is forecst for that morning.
+for r in byday.data:
+    precipIntensity.append(r.precipIntensity)
+    precipProbability.append(r.precipProbability)
+rain={}
+rain['probability'] = precipProbability
+rain['intensity'] = precipIntensity
+
+#Now write to csv
+with open('rainforecast.csv', 'wb') as f:
+    w = csv.writer(f)
+    w.writerow(rain.keys())
+    for i in range(len(rain['probability'])):
+        w.writerow([rain[k][i] for k in rain.keys()])
+
