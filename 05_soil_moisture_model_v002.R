@@ -169,11 +169,23 @@ save(ci, out, file='jags.out.file.RData')
 
 # Diagnostic plots ----------------------
 ## Standard Deviations for random effect taus
+#layout(matrix(c(1,2,3,3),2,2,byrow=TRUE))
 par(mfrow=c(2,3))
 prec = out[,grep("tau",colnames(out), value=TRUE)]
 for(i in 1:ncol(prec)){
   hist(1/sqrt(prec[,i]),main=colnames(prec)[i])
 }
+
+prec1 = out[,grep("tau|beta_0|beta_1|beta_2",colnames(out), value=TRUE)]
+cor(prec1)
+pairs(prec1)
+
+par(mfrow=c (1,1))
+plot(ci[2,], y,   xlab="Predicted", ylab="Observed", pch=20, xlim=range(y,na.rm=TRUE))
+lmfit <- lm(y~ci[2,])
+abline(lmfit, col="red")
+abline(0,1, col="blue", lwd=1.5, lty=2)
+summary(lmfit)
 par(mfrow=c(1,1))
 
 
