@@ -1,15 +1,14 @@
 # We aim to fuse Times-Series Data in a State Space Model: SMAP, GMP and MODIS
 
-# In this test, soilmoisture is a SoilMoisturePrecipFusion model
-#setwd('/Users/ericbullock/Google Drive/Class/Ecological_Forecasting/Project/SoilMoisture')
+# In this test, soilmoisture is a SoilMoistureModel model
+
 ###################
 #------------------ sub-routines,set your JAGS model here
-#predict.JAGS <- function(time,y,p,t,v,NA.indices) {
-predict.JAGS <- function(time,y,p,t,v) {
+predict.JAGS <- function(time,y,p,n) {
   require(rjags)
   require(coda)
   
-  SoilMoisturePrecipFusion = "
+  SoilMoistureModel = "
   model{
   
   #### Data Model
@@ -19,7 +18,8 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   # Data model for NDVI 
   for(t in 2:nt){
-  n[t]~dnorm(n[t-1],tau_nobs)
+  #  n[t]~dnorm(n[t-1],tau_nobs)
+  n[t]~dnorm(mu.ndvi,tau_nobs)
   }
   
   ## Data model for precip
@@ -27,7 +27,9 @@ predict.JAGS <- function(time,y,p,t,v) {
   #p[NA.indices[t]] ~ dlnorm(5, 1)
   #}
   for(t in 1:nt){
-  p[t]~dpois(50)
+  rained[t] ~ dbern(p.rain)
+  pr[t] <- p.rate*rained[t]+0.00001
+  p[t] ~ dpois(pr[t])
   }
   
   #### Process Model
@@ -41,6 +43,9 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   
   #### Priors
+  p.rate ~ dunif(0,1000)
+  p.rain ~ dbeta(1,1)
+  mu.ndvi ~ dunif(-1,1)
   tau_obs ~ dgamma(a_obs,r_obs)
   tau_add ~ dgamma(a_add,r_add)
   beta_0 ~ dbeta(a_beta0,r_beta0)
@@ -56,8 +61,8 @@ predict.JAGS <- function(time,y,p,t,v) {
   "
   
   #data <- list(y=log(y),p=p, n=n, NA.indices=NA.indices, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
-  data <- list(y=log(y),p=p, n=log(n), nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
-               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=5, a_beta1=2, r_beta1=2,
+  data <- list(y=log(y),p=p, n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
+               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=2, a_beta1=2, r_beta1=2,
                a_beta2=1,r_beta2=2, mu_p0=3, tau_p0=3)
   
   
@@ -68,7 +73,7 @@ predict.JAGS <- function(time,y,p,t,v) {
     init[[i]] <- list(tau_add=1/var(diff((log(y.samp)))),tau_obs=1/var((log(y.samp))))
   }
   
-  j.model   <- jags.model (file = textConnection(SoilMoisturePrecipFusion),
+  j.model   <- jags.model (file = textConnection(SoilMoistureModel),
                            data = data,
                            inits = init,
                            n.chains = 3)
@@ -84,7 +89,7 @@ predict.JAGS <- function(time,y,p,t,v) {
   
   jags.out   <- coda.samples (model = j.model,
                               variable.names = c("x","p","n","tau_add","tau_obs","tau_nobs","beta_0","beta_1","beta_2"),
-                              n.iter = 1000)
+                              n.iter = 10000)
   
   
   #summary of the final 10000 iteration jags.out
@@ -102,7 +107,6 @@ ciEnvelope <- function(x,ylo,yhi,...){
 #-------------load data from combined csv
 ## set working directory 
 data.root.path = './example/'
-#data.root.path = 'C:/Users/condo/Documents/SoilMoisture/example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
 #combined<-combined[0:50,]
@@ -116,32 +120,32 @@ combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)
 
 
 #-------------Run JAGS, and Do some plots
-# NA.matrix <- matrix(rep(NA,40), 40, 4)
-# colnames(NA.matrix) <- c("Date", "NDVI", "Precip", "SoilMoisture")
-# combined.NA <- rbind(combined, NA.matrix)
-
 time = as.Date(combined$Date)
 y = combined$SoilMoisture
 p = combined$Precip
 n = combined$NDVI
 
-
+nf = 40
+time = as.Date(combined$Date) 
+time = c(time,time[length(time)]+1:nf)
+y = c(combined$SoilMoisture,rep(NA,nf))
+p = c(combined$Precip,rep(NA,nf))
+n = c(combined$NDVI,rep(NA,nf))
 
 # plot original weekly observation data
-plot(time,y,ylab="SoilMoisture",lwd=2,main='Daily SoilMoisture', ,ylim=c(0,.6))
+plot(time,y,ylab="SoilMoisture",lwd=2,main='Daily SoilMoisture', ylim=c(0,.6))
 
-jags.out.original = predict.JAGS(time,y, p,t,n)
-
-
-par(mfrow=c(1,1))
-
-# plot the original result (weekly observation frequency)
-time.rng = c(1,length(time)) ## adjust to zoom in and out
+jags.out.original = predict.JAGS(time,y,p,n)
 out <- as.matrix(jags.out.original)
 
+
+# plot the original result (weekly observation frequency)
+par(mfrow=c(1,1))
+time.rng = c(1,length(time)) ## adjust to zoom in and out
 ci <- apply(exp(out[,grep("x",colnames(out))]),2,quantile,c(0.025,0.5,0.975))
 
-plot(time,ci[2,],type='n',ylim=range(ci,na.rm=TRUE),ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoisturePrecipFusion')
+ylim = c(0,1)#range(ci,na.rm=TRUE); ylim[2] = min(ylim[2],1)
+plot(time,ci[2,],type='n',ylim=ylim,ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoistureModel')
 ## adjust x-axis label to be monthly if zoomed
 # if(diff(time.rng) < 100){ 
 #   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
@@ -152,6 +156,12 @@ points(time,y,pch="+",cex=0.5)
 points(time,p/2000,pch="o",col="blue",cex=1)
 points(time,n/2,pch="o",col="green",cex=1)
 lines(time,ci[2,],col="red")
+
+######
+ci.ndvi <- apply(out[,grep("n[",colnames(out),fixed = TRUE)],2,quantile,c(0.025,0.5,0.975))
+ci.precip <- apply((out[,grep("p",colnames(out))]),2,quantile,c(0.025,0.5,0.975))
+lines(time,ci.precip[2,]/2000,col="blue")
+lines(time,ci.ndvi[2,]/2,col="green")
 
 # save output --------------------------
 save(ci, out, file='jags.out.file.RData')
@@ -176,3 +186,10 @@ lmfit <- lm(y~ci[2,])
 abline(lmfit, col="red")
 abline(0,1, col="blue", lwd=1.5, lty=2)
 summary(lmfit)
+par(mfrow=c(1,1))
+
+
+
+
+
+
