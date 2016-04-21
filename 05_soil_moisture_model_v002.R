@@ -34,13 +34,13 @@ predict.JAGS <- function(time,y,p,n) {
   
   #### Process Model
   for(t in 2:nt){
-  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t-1] + beta_2*n[t-1]
+  SoilMoisture[t] <- beta_0*x[t-1] + beta_1*p[t-1] + beta_2*n[t-1] 
+
   #Term 1: runoff
   #Term 2: Added impact from yesterday's rainfall (assuming 1 day delay)
   #Term 3: Effect of NDVI
   x[t]~dnorm(SoilMoisture[t],tau_add)
   }
-  
   
   #### Priors
   p.rate ~ dunif(0,1000)
@@ -50,7 +50,7 @@ predict.JAGS <- function(time,y,p,n) {
   tau_add ~ dgamma(a_add,r_add)
   beta_0 ~ dbeta(a_beta0,r_beta0)
   beta_1 ~ dgamma(a_beta1,r_beta1)
-  beta_2 ~ dbeta(a_beta2,r_beta2)
+  beta_2 ~ dnorm(0.0,0.0001)
   mu_p ~ dnorm(mu_p0, tau_p0)
   tau_p ~ dgamma(.01, .01)
   tau_nobs ~ dgamma(0.01,0.01)
@@ -61,10 +61,12 @@ predict.JAGS <- function(time,y,p,n) {
   "
   
   #data <- list(y=log(y),p=p, n=n, NA.indices=NA.indices, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
+#  data <- list(y=log(y),p=p, n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
+#               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=2, a_beta1=2, r_beta1=2,
+#               a_beta2=1,r_beta2=2, mu_p0=3, tau_p0=3)
   data <- list(y=log(y),p=p, n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
                r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=2, a_beta1=2, r_beta1=2,
-               a_beta2=1,r_beta2=2, mu_p0=3, tau_p0=3)
-  
+               mu_p0=3, tau_p0=3)
   
   nchain = 3
   init <- list()
@@ -81,10 +83,10 @@ predict.JAGS <- function(time,y,p,n) {
   ## burn-in
   jags.out   <- coda.samples (model = j.model,
                               variable.names = c("tau_add","tau_obs","beta_0","beta_1","beta_2"),
-                              n.iter = 1000)
+                              n.iter = 10000)
   # Only to plot 1000 iterations.  
   
-  #plot(jags.out) 
+  plot(jags.out) 
   
   
   jags.out   <- coda.samples (model = j.model,
@@ -164,7 +166,7 @@ lines(time,ci.precip[2,]/2000,col="blue")
 lines(time,ci.ndvi[2,]/2,col="green")
 
 # save output --------------------------
-save(ci, out, file='jags.out.file.RData')
+#save(ci, out, file='jags.out.file.RData')
 
 
 # Diagnostic plots ----------------------
@@ -178,7 +180,7 @@ for(i in 1:ncol(prec)){
 
 prec1 = out[,grep("tau|beta_0|beta_1|beta_2",colnames(out), value=TRUE)]
 cor(prec1)
-pairs(prec1)
+#pairs(prec1)
 
 par(mfrow=c (1,1))
 plot(ci[2,], y,   xlab="Predicted", ylab="Observed", pch=20, xlim=range(y,na.rm=TRUE))
