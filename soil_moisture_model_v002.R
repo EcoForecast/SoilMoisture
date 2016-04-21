@@ -148,7 +148,7 @@ ylim = c(0,1)#range(ci,na.rm=TRUE); ylim[2] = min(ylim[2],1)
 plot(time,ci[2,],type='n',ylim=ylim,ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoistureModel')
 ## adjust x-axis label to be monthly if zoomed
 # if(diff(time.rng) < 100){ 
-#   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m=%d")
+#   axis.Date(1, at=seq(time[time.rng[1]],time[time.rng[2]],by='month'), format = "%Y-%m")
 # }
 ciEnvelope(time,(ci[1,]),(ci[3,]),col="lightBlue")
 points(time,y,pch="+",cex=0.5)
