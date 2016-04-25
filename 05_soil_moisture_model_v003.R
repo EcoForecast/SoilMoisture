@@ -23,9 +23,6 @@ predict.JAGS <- function(time,y,p,n) {
   }
   
   ## Data model for precip
-  #for(t in 1:length(NA.indices)){
-  #p[NA.indices[t]] ~ dlnorm(5, 1)
-  #}
   for(t in 1:nt){
   rained[t] ~ dbern(p.rain)
   pr[t] <- p.rate*rained[t]+0.00001
@@ -51,8 +48,8 @@ predict.JAGS <- function(time,y,p,n) {
   beta_0 ~ dbeta(a_beta0,r_beta0)
   beta_1 ~ dgamma(a_beta1,r_beta1)
   beta_2 ~ dnorm(0.0,0.0001)
-  mu_p ~ dnorm(mu_p0, tau_p0)
-  tau_p ~ dgamma(.01, .01)
+  #mu_p ~ dnorm(mu_p0, tau_p0)
+  #tau_p ~ dgamma(.01, .01)
   tau_nobs ~ dgamma(0.01,0.01)
   ## initial condition
   x[1] ~ dunif(x_ic_lower,x_ic_upper)  
@@ -60,13 +57,8 @@ predict.JAGS <- function(time,y,p,n) {
   }
   "
   
-  #data <- list(y=log(y),p=p, n=n, NA.indices=NA.indices, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
-#  data <- list(y=log(y),p=p, n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
-#               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=2, a_beta1=2, r_beta1=2,
-#               a_beta2=1,r_beta2=2, mu_p0=3, tau_p0=3)
   data <- list(y=log(y),p=p, n=n, nt=length(y),x_ic_lower=log(0.000001),x_ic_upper=log(1), a_obs=0.01,
-               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=2, a_beta1=2, r_beta1=2,
-               mu_p0=3, tau_p0=3)
+               r_obs=0.01,a_add=0.01, r_add=.01, a_beta0=2,r_beta0=2, a_beta1=2, r_beta1=2)
   
   nchain = 3
   init <- list()
@@ -83,18 +75,15 @@ predict.JAGS <- function(time,y,p,n) {
   ## burn-in
   jags.out   <- coda.samples (model = j.model,
                               variable.names = c("tau_add","tau_obs","beta_0","beta_1","beta_2"),
-                              n.iter = 10000)
+                              n.iter = 1000)
   # Only to plot 1000 iterations.  
   
   plot(jags.out) 
   
   
   jags.out   <- coda.samples (model = j.model,
-                              variable.names = c("x","p","n","tau_add","tau_obs","tau_nobs","beta_0","beta_1","beta_2"),
+                              variable.names = c("x","p","n","tau_add","tau_obs","tau_nobs","beta_0","beta_1","beta_2","p.rain","p.rate","mu.ndvi"),
                               n.iter = 10000)
-  
-  
-  #summary of the final 10000 iteration jags.out
   #summary(jags.out)
   return(jags.out)
   
@@ -111,28 +100,22 @@ ciEnvelope <- function(x,ylo,yhi,...){
 data.root.path = './example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
-#combined<-combined[0:50,]
-#remove NA values
-# require(zoo)
-# #interpolate between values keeping NA
-# combined$NDVI<-na.approx(combined$NDVI,na.rm=FALSE)    #reset
-##apply first valid value to NA values at beginning
-#idx.not.na=which(!is.na(combined$NDVI))
-#combined$NDVI[is.na(combined$NDVI)]<-combined$NDVI[idx.not.na[1]]
-
+training_date = '2016-02-29'
+training_date_idx = which(combined[,1]==training_date)
+data2training = combined[1:training_date_idx,]
 
 #-------------Run JAGS, and Do some plots
-time = as.Date(combined$Date)
-y = combined$SoilMoisture
-p = combined$Precip
-n = combined$NDVI
+time = as.Date(data2training$Date)
+y = data2training$SoilMoisture
+p = data2training$Precip
+n = data2training$NDVI
 
-nf = 40
-time = as.Date(combined$Date) 
-time = c(time,time[length(time)]+1:nf)
-y = c(combined$SoilMoisture,rep(NA,nf))
-p = c(combined$Precip,rep(NA,nf))
-n = c(combined$NDVI,rep(NA,nf))
+# nf = 40
+# time = as.Date(data2training$Date) 
+# time = c(time,time[length(time)]+1:nf)
+# y = c(data2training$SoilMoisture,rep(NA,nf))
+# p = c(data2training$Precip,rep(NA,nf))
+# n = c(data2training$NDVI,rep(NA,nf))
 
 # plot original weekly observation data
 plot(time,y,ylab="SoilMoisture",lwd=2,main='Daily SoilMoisture', ylim=c(0,.6))
@@ -144,8 +127,7 @@ out <- as.matrix(jags.out.original)
 # plot the original result (weekly observation frequency)
 par(mfrow=c(1,1))
 time.rng = c(1,length(time)) ## adjust to zoom in and out
-ci <- apply(exp(out[,grep("x",colnames(out))]),2,quantile,c(0.025,0.5,0.975))
-
+ci <- apply(exp(out[,grep("x[",colnames(out),fixed = TRUE)]),2,quantile,c(0.025,0.5,0.975))
 ylim = c(0,1)#range(ci,na.rm=TRUE); ylim[2] = min(ylim[2],1)
 plot(time,ci[2,],type='n',ylim=ylim,ylab="Soil Moisture (cm^3/cm^3)",xlab='Date',xlim=time[time.rng], main='SoilMoistureModel')
 ## adjust x-axis label to be monthly if zoomed
@@ -161,12 +143,12 @@ lines(time,ci[2,],col="red")
 
 ######
 ci.ndvi <- apply(out[,grep("n[",colnames(out),fixed = TRUE)],2,quantile,c(0.025,0.5,0.975))
-ci.precip <- apply((out[,grep("p",colnames(out))]),2,quantile,c(0.025,0.5,0.975))
+ci.precip <- apply((out[,grep("p[",colnames(out),fixed = TRUE)]),2,quantile,c(0.025,0.5,0.975))
 lines(time,ci.precip[2,]/2000,col="blue")
 lines(time,ci.ndvi[2,]/2,col="green")
 
 # save output --------------------------
-#save(ci, out, file='jags.out.file.RData')
+save(ci, out, file='jags.out.file.RData')
 
 
 # Diagnostic plots ----------------------

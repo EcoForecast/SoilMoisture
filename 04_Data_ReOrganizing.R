@@ -39,7 +39,7 @@ for (idate in Date.Start:Date.End){
   
   precip = GPM[as.Date(GPM$Date)==i_this_day,2]
   if (is.null(precip)|length(precip)==0) {
-    precip=0} ## note that change precip to NA if necessary
+    precip=NA} ## note that change precip to NA if necessary
   
   smap = SMAP[as.Date(SMAP $Date)==i_this_day,2]
   if (is.null(smap)|length(smap)==0) {
