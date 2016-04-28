@@ -167,13 +167,15 @@ for r in byday.data:
     precipIntensity.append(r.precipIntensity)
     precipProbability.append(r.precipProbability)
 rain={}
-rain['probability'] = precipProbability
-rain['intensity'] = precipIntensity
+base = dt.datetime.today()
+date_list = [(base + dt.timedelta(days=x)).strftime("%m-%d-%Y") for x in range(0, 7)]
+rain['date'] = date_list
+rain['rainfall'] = np.array(precipProbability) * (np.array(precipIntensity)* 609.6)
 
 #Now write to csv
 with open('rainforecast.csv', 'wb') as f:
     w = csv.writer(f)
     w.writerow(rain.keys())
-    for i in range(len(rain['probability'])):
+    for i in range(len(rain['rainfall'])):
         w.writerow([rain[k][i] for k in rain.keys()])
 
