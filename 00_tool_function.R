@@ -15,4 +15,3 @@ wtd.quantile <- function(x,wt,q){
   qi <- findInterval(q,wstar); qi[qi<1]=1;qi[qi>length(x)]=length(x)
   return(x[ord[qi]])
 }
-

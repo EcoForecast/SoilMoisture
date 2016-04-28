@@ -17,8 +17,10 @@ time=as.Date(obs$Date)
 plot(time,sm.obs,ylab="SoilMoisture",lwd=2,main='Daily SoilMoisture (obs)',ylim=c(0,1))
 
 #### SET THE ENSEMBLE SIZE
-ne = 500 ## production run should be 200 - 5000, depending on what your computer can handle
-nt = nrow(obs) # e.g. forecast next 100 days
+ne = 5000 ## production run should be 200 - 5000, depending on what your computer can handle
+nf = 14 # number of days to forecast
+nt = nrow(obs)+nf # e.g. forecast nrow(obs)+14
+time_f =  c(time,time[length(time)]+1:nf) # time include the forecast
 
 #### Initialize inputs - last day value from jags models
 mcmc.sm = exp(out[,grep("x[",colnames(out),fixed=T)]) # it is actually log(sm)
@@ -58,9 +60,14 @@ params$beta_1  =  rlnorm(ne,log(median(mcmc.beta_1)),sd(mcmc.beta_1))
 params$beta_2  =  rnorm(ne,median(mcmc.beta_2),sd(mcmc.beta_2))
 
 ## Process and observation error
-params$tau_add = 1/sqrt(rgamma(ne,10,.04)) ## prior process error for model
-params$tau_obs = 1/sqrt(rgamma(ne,10,.06)) ## prior data error for soilmoisture
-params$tau_nobs = 1/sqrt(rgamma(ne,10,.05)) ## prior data error in ndvi
+#params$tau_add = 1/sqrt(rgamma(ne,10,.04)) ## prior process error for model
+#params$tau_obs = 1/sqrt(rgamma(ne,10,.06)) ## prior data error for soilmoisture
+#params$tau_nobs = 1/sqrt(rgamma(ne,10,.05)) ## prior data error in ndvi
+
+params$tau_add = 1/sqrt(rgamma(ne,10,1/var(mcmc.tau_add)*100)) ## prior process error for model
+params$tau_obs = 1/sqrt(rgamma(ne,10,1/var(mcmc.tau_obs)*100)) ## prior data error for soilmoisture
+params$tau_nobs = 1/sqrt(rgamma(ne,10,1/var(mcmc.tau_nobs)*100)) ## prior data error in ndvi
+
 ## Other priors
 params$p.rate = rpois(ne,median(mcmc.p.rate))
 params$p.rain = rnorm(ne,median(mcmc.p.rain),sd(mcmc.p.rain))
@@ -82,19 +89,17 @@ varnames <- c("SoilMoisture","Precip","NDVI")
 units <- c("cm3/cm3","mm","unitless")
 for(i in 1:3){
   ci = apply(output[,,i],1,quantile,c(0.025,0.5,0.975))
-  plot(time,ci[2,],main=varnames[i],xlab="time",ylab=units[i],type='l',ylim=range(ci))
-  ciEnvelope(time,ci[1,],ci[3,],col=col.alpha("lightGrey",0.5))
+  plot(time_f,ci[2,],main=varnames[i],xlab="time",ylab=units[i],type='l',ylim=range(ci))
+  ciEnvelope(time_f,ci[1,],ci[3,],col=col.alpha("lightGrey",0.5))
   lines(ci[2,])
 }
 
-##Then, let only focus on soilmoisture
+##Then, let's only focus on soilmoisture
 sm.model.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
-plot(time,sm.model.ci[2,],main=varnames[1],xlab="time",ylab=units[1],type='l',ylim=range(sm.model.ci))
-ciEnvelope(time,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
+plot(time_f,sm.model.ci[2,],main=varnames[1],xlab="time",ylab=units[1],type='l',ylim=range(sm.model.ci))
+ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
 lines(sm.model.ci[2,])
 points(time, sm.obs,col="red")
-
-
 
 #### Then do resampling particle filter
 update.params <- function(params,index){
@@ -123,7 +128,6 @@ for(t in 1:nt){
     sample = sample+1
     print(sample)
     if(!is.na(sm.obs[sample])){  ## if observation is present
-      ## calulate Likelihood (weights)
       Lm = output[t, ,1] ## model soilmoisture over obs period
       wt = dnorm(sm.obs[sample],Lm,1/sqrt(median(mcmc.tau_obs)))
       ## resample 
@@ -140,14 +144,14 @@ save(output,output.ensemble,hist.params,initial.inputs,file="PF.output.RData")
 sm.pr.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
 
 
-plot(time,sm.model.ci[2,],ylim=range(c(range(sm.model.ci),range(sm.obs,na.rm=TRUE))),
+plot(time_f,sm.model.ci[2,],ylim=range(c(range(sm.model.ci),range(sm.obs,na.rm=TRUE))),
      type='n',ylab="LAI",xlab="Time")
 
-ciEnvelope(time,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
-ciEnvelope(time,sm.pr.ci[1,],sm.pr.ci[3,],col=col.alpha("lightGreen",0.5))
+ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
+ciEnvelope(time_f,sm.pr.ci[1,],sm.pr.ci[3,],col=col.alpha("lightGreen",0.5))
 points(time, sm.obs,col="red")  
-lines(time,sm.model.ci[2,],col="black")
-lines(time,sm.pr.ci[2,],col="blue")
+lines(time_f,sm.model.ci[2,],col="black")
+lines(time_f,sm.pr.ci[2,],col="blue")
 legend("topleft",lty=c(1,1,1,1,0),
        c('95% CI of Ensemble','95% CI of PF','Ensemble median','PF median','obs. sm'),
        col=c('lightGrey','lightGreen','black','blue','red'),
