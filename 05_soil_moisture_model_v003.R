@@ -1,15 +1,18 @@
 # We aim to fuse Times-Series Data in a State Space Model: SMAP, GMP and MODIS
 source("00_tool_function.R")
 source("soilmoisture_JAGS.R")
+source("00_global_variables.R")
 
 #-------------load data from combined csv
 ## set working directory 
 data.root.path = './example/'
 # Soil Moisture (cm^3 of water per cm^3 of soil)
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
-training_date = '2016-02-29'
-training_date_idx = which(combined[,1]==training_date)
-data2training = combined[1:training_date_idx,]
+#training_date_end = '2016-02-29'
+#training_date_start = '2015-04-03'
+training_date_start_idx = which(combined[,1]==training_date_start)
+training_date_end_idx = which(combined[,1]==training_date_end)
+data2training = combined[1:training_date_end_idx,]
 
 #-------------Run JAGS, and Do some plots
 time = as.Date(data2training$Date)
@@ -34,6 +37,9 @@ jags.out.original = predict.JAGS(time,y,p,n)
 out <- as.matrix(jags.out.original)
 
 # plot the original result (weekly observation frequency)
+png(filename = sprintf("./example/Forecast_JAGS_plot_%s_%s.png",format(as.Date(training_date_start), format="%Y%m%d"),format(as.Date(training_date_end), format="%Y%m%d")),
+    width = 960, height = 480, units = "px", pointsize = 12,
+    bg = "white",  res = NA)
 par(mfrow=c(1,1))
 time.rng = c(1,length(time)) ## adjust to zoom in and out
 ci <- apply(exp(out[,grep("x[",colnames(out),fixed = TRUE)]),2,quantile,c(0.025,0.5,0.975))
@@ -57,8 +63,11 @@ ci.ndvi <- apply(out[,grep("n[",colnames(out),fixed = TRUE)],2,quantile,c(0.025,
 ci.precip <- apply((out[,grep("p[",colnames(out),fixed = TRUE)]),2,quantile,c(0.025,0.5,0.975))
 lines(time,ci.precip[2,]/2000,col="blue")
 lines(time,ci.ndvi[2,]/2,col="green")
-
+dev.off()
 # save output --------------------------
+out[,grep("p[",colnames(out),fixed = TRUE)]=out[,grep("p[",colnames(out),fixed = TRUE)]/10
+out[,grep("p.rate",colnames(out),fixed = TRUE)]=out[,grep("p.rate",colnames(out),fixed = TRUE)]/10
+
 save(ci, out, file='jags.out.file.RData')
 
 
