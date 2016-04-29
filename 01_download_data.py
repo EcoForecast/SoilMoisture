@@ -96,29 +96,6 @@ for y in range(2015, year):  # Data starts in 2015
 
 ftp.quit()
 
-# Connect to SMAP server and download files
-# Set working directory
-#os.chdir("C:/test/SMAP")
-os.chdir("/home/carya/SoilMoisture/data/SMAP")
-ftp = ftp_connect("n5eil01u.ecs.nsidc.org", "anonymous", passw, "/SAN/SMAP/SPL3SMP.002/")
-ftp.dir()
-ls = []
-ftp.retrlines('MLSD', ls.append) # Retrieve files and folders from the server folder
-list_folders = list(s for s in ls if "=dir" in s)  # Filter folders only
-
-# Super ugly but does the job
-folder_names = []
-for fd in range(len(list_folders)):
-    folder_names.append(list_folders[fd].split("; ")[1])  # Iterate over list, split string, retrieve second element
-
-# Iterate over folder names, download all the files
-for f in folder_names:
-    ftp.cwd(str(f))
-    download_files(ftp, "")
-    ftp.cwd('..')
-
-ftp.quit()
-
 # Connect to MODIS server and downlaod files
 # Set working directory
 #os.chdir("C:/test/MODIS")
@@ -178,3 +155,29 @@ with open('rainforecast.csv', 'wb') as f:
     w.writerow(rain.keys())
     for i in range(len(rain['rate'])):
         w.writerow([rain[k][i] for k in rain.keys()])
+
+# Connect to SMAP server and download files
+# NOTE: This server is very unstable and closes the connection very often!
+# Set working directory
+#os.chdir("C:/test/SMAP")
+os.chdir("/home/carya/SoilMoisture/data/SMAP")
+ftp = ftp_connect("n5eil01u.ecs.nsidc.org", "anonymous", passw, "/SAN/SMAP/SPL3SMP.002/")
+ftp.dir()
+ls = []
+ftp.retrlines('MLSD', ls.append) # Retrieve files and folders from the server folder
+list_folders = list(s for s in ls if "=dir" in s)  # Filter folders only
+
+# Super ugly but does the job
+folder_names = []
+for fd in range(len(list_folders)):
+    folder_names.append(list_folders[fd].split("; ")[1])  # Iterate over list, split string, retrieve second element
+
+# Iterate over folder names, download all the files
+for f in folder_names:
+    ftp.cwd(str(f))
+    download_files(ftp, "")
+    ftp.cwd('..')
+
+ftp.quit()
+
+
