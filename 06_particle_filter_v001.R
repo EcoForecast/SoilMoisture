@@ -159,10 +159,10 @@ png(filename = sprintf("./example/Forecast_PF_plot_%s.png",format(today, format=
     width = 960, height = 480, units = "px", pointsize = 12,
     bg = "white",  res = NA)
 plot(time_last_date2plot,rep(0.2,length(time_last_date2plot)),ylim=range(c(0,1)),
-     type='n',ylab="LAI",xlab="time",main="Soil Moisture Forecast(resampling PF)",
+     type='n',ylab="Soil Moisture",xlab="time",main="Soil Moisture Forecast(resampling PF)",
      cex.lab=1.3, cex.axis=1.3, cex.main=1.3, cex.sub=1.3)
 #plot(time_f,sm.model.ci[2,],ylim=range(c(range(sm.model.ci),range(sm.obs,na.rm=TRUE))),
-#     type='n',ylab="LAI",xlab="time")
+#     type='n',ylab="Soil Moisture",xlab="time")
 ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
 ciEnvelope(time_f,sm.pr.ci[1,],sm.pr.ci[3,],col=col.alpha("lightGreen",0.5))
 points(time_t, sm.obs,col="red")  
