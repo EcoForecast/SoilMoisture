@@ -5,7 +5,11 @@
 # 4. The object "combined" will be the final output. Check it and you will understand it.
 # 5. Copy this code to your code
 
+<<<<<<< Updated upstream:04_Data_ReOrganizing.R
 data.root.path = './example/'
+=======
+data.root.path = './'
+>>>>>>> Stashed changes:Data_ReOrganizing.R
 SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
 GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
 MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 

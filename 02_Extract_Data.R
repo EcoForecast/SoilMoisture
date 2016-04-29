@@ -98,9 +98,9 @@ get_ndvi <- function(roi, image, day){
   QA_ST12 = 1.*cloud_bit[13] # MOD35 snow/ice flag
   QA_ST13 = 1.*cloud_bit[14] # Pixel is adjacent to cloud
   QA_ST15 = 1.*cloud_bit[16] # Internal snow mask
-
   if (!(QA_ST0_1==0 & QA_ST2==0 & QA_ST10==0 & QA_ST11==0 & QA_ST12==0 & QA_ST13==0 & QA_ST15==0 & QA_ST8_9<=1 & (QA_ST6_7==1 |QA_ST6_7==2))) {
-     ndvi_value = NA
+    print("There is a cloud") 
+    ndvi_value <- NA
   }
 
   return(ndvi_value)
@@ -201,8 +201,6 @@ write_csv <- function(today, value, data) {
   Date<-as.character(today)
   Data<-as.character(value)
   out_df <- data.frame(Date,Data)
-  print(r_csv)
-  print(out_df)
   out_csv <- rbind(r_csv,out_df)
   write.csv(out_csv,csv,row.names=FALSE)
 }

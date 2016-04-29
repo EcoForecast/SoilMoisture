@@ -4,15 +4,15 @@
 #$ -N cronjob
 
 
+echo `date`
+echo `date` >> /home/carya/SoilMoisture/process_log.txt
 # Run download job
-
+cd /home/carya/SoilMoisture/
 python 01_download_data.py "parevalo@bu.edu" "parevalo@bu.edu"
-
-echo `date` >> process_log.txt
 
 
 #Compare MODIS data to process log, and process any new data.
-for i in data/MODIS/M*hdf; do
+for i in data/MODIS/MY*hdf; do
 echo $i
 if grep -Fxq $i process_log.txt
 then
@@ -25,7 +25,7 @@ fi
 done
 
 #Compare GPM data to process log, and process any new data.
-for i in data/GPM/3*tif; do
+for i in data/GPM/3*1day.tif; do
 echo $i
 if grep -Fxq $i process_log.txt
 then
