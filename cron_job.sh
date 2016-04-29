@@ -50,3 +50,11 @@ fi
 done
 
 Rscript 03_plot_time_series.R
+
+Rscript 04_Data_ReOrganizing.R
+
+Rscript 05_soil_moisture_model_v003.R
+
+Rscript 06_particle_filter_v001.R
+
+convert -delay 50 -loop 0 example/gif/Forecast_PF_plot*.png web/plots/animatePF.gif 
