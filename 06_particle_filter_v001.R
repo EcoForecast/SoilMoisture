@@ -155,7 +155,7 @@ save(output,output.ensemble,hist.params,initial.inputs,file="PF.output.RData")
 
 ## Extract and summarize soilmoisture (pr = PF, resampling)
 sm.pr.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
-png(filename = sprintf("./example/Forecast_PF_plot_%s.png",format(today, format="%Y%m%d")),
+png(filename = sprintf("./example/gif/Forecast_PF_plot_%s.png",format(today, format="%Y%m%d")),
     width = 960, height = 480, units = "px", pointsize = 12,
     bg = "white",  res = NA)
 plot(time_last_date2plot,rep(0.2,length(time_last_date2plot)),ylim=range(c(0,1)),
@@ -176,7 +176,7 @@ dev.off()
 
 
 ### assess shifts in any parameter values
-png(filename = sprintf("./example/Forecast_PF_params_plot_%s.png",format(today, format="%Y%m%d")),
+png(filename = sprintf("./example/gif/Forecast_PF_params_plot_%s.png",format(today, format="%Y%m%d")),
     width = 480, height = 480, units = "px", pointsize = 12,
     bg = "white",  res = NA)
 par(mfrow=c(3,3))
