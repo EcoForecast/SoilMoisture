@@ -4,11 +4,7 @@
 # 3. Combine multiple data sources. In the output file, the starting date will be the first day that we have soil moisture data.
 # 4. The object "combined" is the final output. Check it and you will understand it.
 
-<<<<<<< Updated upstream:04_Data_ReOrganizing.R
-data.root.path = './example/'
-=======
 data.root.path = './'
->>>>>>> Stashed changes:Data_ReOrganizing.R
 SMAP <- read.csv(sprintf("%sSMAP.csv",data.root.path))    ## read in soil moisture data 
 GPM <- read.csv(sprintf("%sGPM.csv",data.root.path))      ## read in precipitation data 
 MODIS <- read.csv(sprintf("%sMODIS.csv",data.root.path))    ## read in MODIS data 
@@ -70,9 +66,6 @@ NonNAindex <- min(which(!is.na(combined$SoilMoisture)))-1
 combined=combined[-(1:NonNAindex),]
 row.names(combined) <- 1:nrow(combined)
 
-<<<<<<< HEAD
+data.root.path = './example/'
+write.table(combined,file = paste(data.root.path,'combined_data.csv',sep=""),na="NA",row.names=FALSE,col.names=TRUE,sep=",")
 
-write.table(combined,file = paste(data.root.path,'combined_data.csv',sep=""),na="NA",row.names=FALSE,col.names=TRUE,sep=",")
-=======
-write.table(combined,file = paste(data.root.path,'combined_data.csv',sep=""),na="NA",row.names=FALSE,col.names=TRUE,sep=",")
->>>>>>> 7672ad9b165866fda9c87b22fdf5320ef232b037
