@@ -150,7 +150,7 @@ for(t in 1:nt){
     }
     hist.params[[sample+1]] = params
 }
-save(output,output.ensemble,hist.params,initial.inputs,file="PF.output.RData") 
+save(output,output.ensemble,params,hist.params,initial.inputs,file="PF.output.RData") 
 
 
 ## Extract and summarize soilmoisture (pr = PF, resampling)
@@ -219,55 +219,3 @@ for(i in 1:length(params)){
 }
 dev.off()
 par(mfrow=c(1,1))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# daily.mean<-array(0,nt)
-# range.ensemble<-array(0,n_ensemble)
-# for(i in 1:length(temp)){
-#  daily.mean[i]<-mean(output[i,,1])
-# }
-# 
-# 
-# 
-# pdf("Initial_Forecast.pdf")
-# plot.variables <- function(reg.x,label){
-#   reg.y=output[2,,1]
-#   reg <- lm(reg.y~reg.x,model=TRUE)
-#   plot(reg.x,reg.y,xlab=label,ylab='Soil Moisture',pch=20)
-#   abline(reg$coefficients, col='Red')
-#   r.sq <- summary(reg)$r.squared
-#   legend("topleft",c(paste("Sensitivity (Slope) =", format((reg$coefficients[2]), digits=3)),paste("Uncertainty (R^2) =", format(r.sq,digits=3))),pt.cex=1,cex=0.7) 
-# }
-# 
-# 
-# plot(combined[2,],type='l',ylim=range(combined),xlab='Days Since Start of time Series',main='Soil Moisture (cm^3/cm^3)', ylab='Soil Moisture')
-# ciEnvelope(1:ncol(combined),combined[1,],combined[3,],col=col.alpha("lightGrey",0.5))
-# abline(v=length)
-# legend("topleft","Line Represents Start of Particle Filter Forecast",pt.cex=1,cex=0.7)
-# 
-# plot.variables(params$beta_0,"Beta 0 Soil Moisture Persistance")
-# plot.variables(params$beta_1,"Beta 1 Influence of Rainfall")
-# plot.variables(params$beta_2,"Beta 2 Influence of NDVI")
-# plot.variables(output[2,,2],"Rainfall (mm)")
-# plot.variables(output[2,,3],"NDVI")
-# 
-# dev.off()
-# 
-# 
-# 
-# 
-# 
-# 
-# 
