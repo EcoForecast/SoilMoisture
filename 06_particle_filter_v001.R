@@ -168,6 +168,7 @@ ciEnvelope(time_f,sm.pr.ci[1,],sm.pr.ci[3,],col=col.alpha("lightGreen",0.5))
 points(time_t, sm.obs,col="red")  
 lines(time_f,sm.model.ci[2,],col="black")
 lines(time_f,sm.pr.ci[2,],col="blue")
+lines(c(today,today),c(0,1),col="magenta")
 legend("topleft",lty=c(1,1,1,1,0),
        c('95% CI of Ensemble','95% CI of PF','Ensemble median','PF median','obs. sm'),
        col=c('lightGrey','lightGreen','black','blue','red'),
