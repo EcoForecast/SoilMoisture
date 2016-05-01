@@ -2,10 +2,11 @@
 ## please be very careful to set a global variable (do not mess up names in the other scripts)
 
 
-### Set training period for JAGS model
+### Set training period and n iterations for JAGS model
 training_date_start = '2015-04-03'
 training_date_end = '2016-02-29'
 last_date2plot = as.Date('2016-05-19')
+n.iter.jags=10000
 ###
 
 ### Set ensemble number and # of days to predict

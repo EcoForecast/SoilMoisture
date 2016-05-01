@@ -3,7 +3,7 @@
 predict.JAGS <- function(time,y,p,n) {
   require(rjags)
   require(coda)
-  
+  source("00_global_variables.R")
   SoilMoistureModel = "
   model{
   
@@ -79,7 +79,7 @@ predict.JAGS <- function(time,y,p,n) {
   
   jags.out   <- coda.samples (model = j.model,
                               variable.names = c("x","p","n","tau_add","tau_obs","tau_nobs","beta_0","beta_1","beta_2","p.rain","p.rate","mu.ndvi"),
-                              n.iter = 10000)
+                              n.iter = n.iter.jags)
   #summary(jags.out)
   return(jags.out)
   
