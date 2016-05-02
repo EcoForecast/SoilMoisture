@@ -8,9 +8,6 @@ SSSMbyte= cmpfun(SSSM)
 load('./jags.out.file.RData')
 data.root.path = './example/'
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
-training_date_end = as.Date(training_date_end) # last training date
-
-prediction_date = as.character(training_date_end +1) #first day to predict
 prediction_date_idx = which(combined[,1]==prediction_date) # find the index
 obs = combined[prediction_date_idx:nrow(combined),]
 rm(combined)
@@ -93,25 +90,6 @@ for(t in 1:nt){
   print(t) ## day counter
 }
 
-## Basic time-series visualizations for all SSSM model output variables
-output[is.nan(output)] = 0
-output[is.infinite(output)] = 0
-varnames <- c("SoilMoisture","Precip","NDVI")
-units <- c("cm3/cm3","mm","unitless")
-par(mfrow=c(1,1))
-for(i in 1:3){
-  ci = apply(output[,,i],1,quantile,c(0.025,0.5,0.975))
-  plot(time_f,ci[2,],main=varnames[i],xlab="time",ylab=units[i],type='l',ylim=range(ci))
-  ciEnvelope(time_f,ci[1,],ci[3,],col=col.alpha("lightGrey",0.5))
-  lines(ci[2,])
-}
-
-##Then, let's only focus on soilmoisture
-sm.model.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
-plot(time_f,sm.model.ci[2,],main=varnames[1],xlab="time",ylab=units[1],type='l',ylim=range(sm.model.ci))
-ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
-lines(sm.model.ci[2,])
-points(time_t, sm.obs,col="red")
 
 #### Then do resampling particle filter
 update.params <- function(params,index){
@@ -152,6 +130,28 @@ for(t in 1:nt){
 }
 save(output,output.ensemble,params,hist.params,initial.inputs,file="PF.output.RData") 
 
+## Basic time-series visualizations for all SSSM model output variables
+output[is.nan(output)] = 0
+output[is.infinite(output)] = 0
+varnames <- c("SoilMoisture","Precip","NDVI")
+units <- c("cm3/cm3","mm","unitless")
+par(mfrow=c(1,1))
+for(i in 1:3){
+  ci.ens = apply(output.ensemble[,,i],1,quantile,c(0.025,0.5,0.975))
+  ci.pf = apply(output[,,i],1,quantile,c(0.025,0.5,0.975))
+  plot(time_f,ci.ens[2,],main=varnames[i],xlab="time",ylab=units[i],type='l',ylim=range(ci.ens))
+  ciEnvelope(time_f,ci.ens[1,],ci.ens[3,],col=col.alpha("lightGrey",0.5))
+  ciEnvelope(time_f,ci.pf[1,],ci.pf[3,],col=col.alpha("lightGreen",0.5))
+  lines(time_f,ci.ens[2,])
+  lines(time_f,ci.pf[2,], col=3)
+}
+
+##Then, let's only focus on soilmoisture
+sm.model.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
+plot(time_f,sm.model.ci[2,],main=varnames[1],xlab="time",ylab=units[1],type='l',ylim=range(sm.model.ci))
+ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGreen",0.5))
+lines(sm.model.ci[2,])
+points(time_t, sm.obs,col="red")
 
 ## Extract and summarize soilmoisture (pr = PF, resampling)
 sm.pr.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
