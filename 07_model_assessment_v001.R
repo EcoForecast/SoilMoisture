@@ -15,6 +15,8 @@ load("PF.output.RData")
 source("00_global_variables.R")
 data.root.path = './example/'
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
+training_date_end_d = as.Date(training_date_end) # last training date
+prediction_date = as.character(training_date_end_d +1) #first day to predict
 prediction_date_idx = which(combined[,1]==prediction_date) # find the index
 
 # soil moisture observation error
