@@ -7,8 +7,6 @@ training_date_start = '2015-04-03'
 training_date_end = '2016-02-29'
 last_date2plot = as.Date('2016-05-19')
 
-training_date_end_d = as.Date(training_date_end) # last training date
-prediction_date = as.character(training_date_end_d +1) #first day to predict
 
 n.iter.jags=10000
 ###

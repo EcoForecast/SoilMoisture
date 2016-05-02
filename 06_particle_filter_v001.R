@@ -8,6 +8,8 @@ SSSMbyte= cmpfun(SSSM)
 load('./jags.out.file.RData')
 data.root.path = './example/'
 combined <- as.data.frame(read.csv(sprintf("%scombined_data.csv",data.root.path)))
+training_date_end_d = as.Date(training_date_end) # last training date
+prediction_date = as.character(training_date_end_d +1) #first day to predict
 prediction_date_idx = which(combined[,1]==prediction_date) # find the index
 obs = combined[prediction_date_idx:nrow(combined),]
 rm(combined)
@@ -90,6 +92,12 @@ for(t in 1:nt){
   print(t) ## day counter
 }
 
+##Then, let's only focus on ensemble soilmoisture
+sm.model.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
+plot(time_f,sm.model.ci[2,],main=varnames[1],xlab="time",ylab=units[1],type='l',ylim=range(sm.model.ci))
+ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
+lines(sm.model.ci[2,])
+points(time_t, sm.obs,col="red")
 
 #### Then do resampling particle filter
 update.params <- function(params,index){
@@ -146,12 +154,7 @@ for(i in 1:3){
   lines(time_f,ci.pf[2,], col=3)
 }
 
-##Then, let's only focus on soilmoisture
-sm.model.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
-plot(time_f,sm.model.ci[2,],main=varnames[1],xlab="time",ylab=units[1],type='l',ylim=range(sm.model.ci))
-ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGreen",0.5))
-lines(sm.model.ci[2,])
-points(time_t, sm.obs,col="red")
+
 
 ## Extract and summarize soilmoisture (pr = PF, resampling)
 sm.pr.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
@@ -180,6 +183,7 @@ dev.off()
 png(filename = sprintf("./example/gif/Forecast_PF_params_plot_%s.png",format(today, format="%Y%m%d")),
     width = 480, height = 480, units = "px", pointsize = 12,
     bg = "white",  res = NA)
+
 par(mfrow=c(3,3))
 par(mar=c(2,2,4,0.7))
 for(i in 1:length(params)){
