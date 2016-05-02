@@ -93,6 +93,11 @@ for(t in 1:nt){
 }
 
 ##Then, let's only focus on ensemble soilmoisture
+par(mfrow=c(1,1))
+output[is.nan(output)] = 0
+output[is.infinite(output)] = 0
+varnames <- c("SoilMoisture","Precip","NDVI")
+units <- c("cm3/cm3","mm","unitless")
 sm.model.ci  = apply(output[,,1],1,quantile,c(0.025,0.5,0.975))
 plot(time_f,sm.model.ci[2,],main=varnames[1],xlab="time",ylab=units[1],type='l',ylim=range(sm.model.ci))
 ciEnvelope(time_f,sm.model.ci[1,],sm.model.ci[3,],col=col.alpha("lightGrey",0.5))
@@ -141,9 +146,6 @@ save(output,output.ensemble,params,hist.params,initial.inputs,file="PF.output.RD
 ## Basic time-series visualizations for all SSSM model output variables
 output[is.nan(output)] = 0
 output[is.infinite(output)] = 0
-varnames <- c("SoilMoisture","Precip","NDVI")
-units <- c("cm3/cm3","mm","unitless")
-par(mfrow=c(1,1))
 for(i in 1:3){
   ci.ens = apply(output.ensemble[,,i],1,quantile,c(0.025,0.5,0.975))
   ci.pf = apply(output[,,i],1,quantile,c(0.025,0.5,0.975))
