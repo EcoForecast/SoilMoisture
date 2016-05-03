@@ -161,7 +161,7 @@ with open('rainforecast.csv', 'wb') as f:
 # Set working directory
 #os.chdir("C:/test/SMAP")
 os.chdir("/home/carya/SoilMoisture/data/SMAP")
-ftp = ftp_connect("n5eil01u.ecs.nsidc.org", "anonymous", passw, "/SAN/SMAP/SPL3SMP.002/")
+ftp = ftp_connect("n5eil01u.ecs.nsidc.org", "anonymous", passw, "/SAN/SMAP/SPL3SMP.003/")
 ftp.dir()
 ls = []
 ftp.retrlines('MLSD', ls.append) # Retrieve files and folders from the server folder
