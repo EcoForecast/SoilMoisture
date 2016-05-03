@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import numpy as np
 import csv
 import forecastio
 import sys
